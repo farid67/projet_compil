@@ -2,14 +2,14 @@
 	#include <stdio.h>
 	#include <stdlib.h>
 	#include <string.h>
+	#include "y.tab.h"
 	
-	FILE* out;
+/* 	FILE* out; */
 	int compteur_ligne =1;
 %}
 
-keyword  	int|stencil|if|else|while|for|const|printf|printi|main|return
-space_newLine	[ \t\n]
-nonAlphaNum	["+""\-""/""{""}"","";""=""$""\[""\]""\(""\)""&&"">""<""!""||"]
+space_newLine	[ \t\n]*
+nonAlphaNum	["+""\-""/""{""}"","";""=""$""\[""\]""\(""\)""&"">""<""!""|"]
 
 
 %%
@@ -17,17 +17,27 @@ nonAlphaNum	["+""\-""/""{""}"","";""=""$""\[""\]""\(""\)""&&"">""<""!""||"]
 
 
 {space_newLine} 	{if (strcmp(yytext,"\n") == 0) {compteur_ligne++;}}
-{nonAlphaNum}		{}
-{keyword}		{
-				printf("mot clé reconnu\n");
+{nonAlphaNum}		{return yytext[0];}
+int			{return INT ;}
+stencil			{return STENCIL;}
+if			{return IF;}
+else			{return ELSE;}
+while			{return WHILE;}
+for			{return FOR;}
+const			{return CONST;}
+printf			{return PRINTF;}
+printi			{return PRINTI;}
+main			{return MAIN;}
+return			{return RETURN;}
+[0-9]+			{
+				yylval.value = atoi(yytext);
+/* 				printf("entier reconnu\n"); */
+				return NUMERO;
 			}
 [a-zA-Z][a-zA-Z_0-9]*	{
-				printf("identificateur reconnu\n");
-/* 				return yytext; */
-			}
-[0-9]*		{
-				printf("entier reconnu\n");
-/* 				return atoi(yytext); */
+				yylval.identificateur = strdup (yytext);
+/* 				printf("identificateur reconnu\n"); */
+				return ID;
 			}
 .			{
 				printf("Caractère non reconnu par Lex %s, ligne %d\n",yytext,compteur_ligne);
@@ -35,16 +45,16 @@ nonAlphaNum	["+""\-""/""{""}"","";""=""$""\[""\]""\(""\)""&&"">""<""!""||"]
 
 %%
 
-int main()
-{
+// int main()
+// {
 /* 	yyin = fopen("/home/farid/Documents/M1/Compilation/Projet/stenc.txt", "r"); */
 	
 /* 	out = fopen("/home/farid/Documents/M1/Compilation/Projet/sortie.txt", "w+"); */
 	
-	yylex();
-	
+/* 	yylex(); */
+/* 	 */
 /* 	fclose(yyin); */
 /* 	fclose(out); */
 	
-	return 0;
-}
+/* 	return 0; */
+// }
