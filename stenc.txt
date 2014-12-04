@@ -1,0 +1,36 @@
+const int height = 128;
+const int width = 128;
+
+int main()
+{
+	int i,j;
+	int gx,gy;
+	int image[height][width]; //Image originale en niveaux de gris 
+	int sobel[height][width]; //Image transformee
+	
+	stencil s_gx{1,2} = {{-1,0,1},{-2,0,2},{-1,0,1}};
+	stencil s_gy{1,2} = {{1,2,1},{0,0,0},{-1,2,1}};
+	
+	//Filtre Sobel
+	
+	for (i=1 ; i < height-1; i++)
+	{
+		for (j=1; j< width-1; j++)
+		{
+			gx=s_gx $ image[i][j];
+			if (gx < 0)
+			{
+				gx = -gx;
+			}
+			gy=s_gy $ image[i][j];
+			if (gy < 0)
+			{
+				gy = -gy;
+			}
+			sobel[i][j] = (gx + gy)/2;
+		}
+	}
+	
+	return 0;
+	
+}
