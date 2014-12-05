@@ -4,11 +4,9 @@ projet_compil
 Projet compilation - StenC
 
 
-/****************************
- * 
- * 	NOTE IMPORTANTE
- * 
-****************************/
+/**************
+NOTE IMPORTANTE
+***************/
 
 Pour les tests, faire :
 make 
