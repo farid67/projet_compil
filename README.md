@@ -9,7 +9,9 @@ NOTE IMPORTANTE
 ***************/
 
 Pour les tests, faire :
-make 
+
+make
+
 cat stenc_minimalist.txt | ./a.out
 
 
