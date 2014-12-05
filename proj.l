@@ -25,7 +25,6 @@ else			{return ELSE;}
 while			{return WHILE;}
 for			{return FOR;}
 const			{return CONST;}
-printf			{return PRINTF;}
 printi			{return PRINTI;}
 main			{return MAIN;}
 return			{return RETURN;}

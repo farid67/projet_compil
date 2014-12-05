@@ -3,12 +3,9 @@
 
 void traitementTds( struct symbol* tds)
 {
-	if (tds == NULL)
+	if (tds != NULL)
 	{
-		printf ("Aucuns symboles \n");
-	}
-	else
-	{
+		printf("\t.data\n");
 		struct symbol* tmp = tds;
 		do
 		{
@@ -27,6 +24,8 @@ void traitementQList( struct quad_list* q_list)
 {
 	// pour le moment on traite les différents quad dont l'opérateur est un li et dont le résultat et un symbole avec un numéro différents de 0
 	
+	printf("\t.text\n");
+	printf("\t.globl main\n\n");
 	printf("main:\n");
 	
 	if (q_list != NULL)
@@ -38,7 +37,7 @@ void traitementQList( struct quad_list* q_list)
 			tmp = tmp_list -> node;
 			do 
 			{
-				if (strcmp(tmp->op,"li") == 0 && tmp->res->value != 0)
+				if (strcmp(tmp->op,"li") == 0 && tmp->res->value != 0) 
 				{
 					printf("\tli ");
 					switch (tmp->res->value)
@@ -52,6 +51,30 @@ void traitementQList( struct quad_list* q_list)
 					}
 					printf("%d\n",tmp->arg1->value);
 				}
+				
+				else if (strcmp(tmp->op,"=") ==0)
+				{
+					// affectation d'une expression vers un ID
+					
+					// d'abord un load int de la valeur souhaitée
+					printf("\tli $v0 %d\n",tmp->arg1->value);
+					// stockage de la valeur souhaitée dans la zone mémoire correspondante
+					printf("\tsw $v0 %s\n",tmp->res->name);
+				}
+				
+// 				else if (strcmp(tmp->op,"printi") ==0)
+// 				{
+// 					// dépend de ce que l'on veut afficher, si c'est une variable il faut faire un load word 
+// 					if (tmp->arg1->isVar)
+// 					{
+// 						printf("\tlw $a0 %s",tmp->arg1->name);
+// 					}
+// 					else
+// 					{
+// 						printf("\tli $a0 %d",tmp->arg1->value);
+// 					}
+// 				}
+				
 				else if (strcmp(tmp->op,"syscall") == 0)
 				{
 					printf("\t%s\n",tmp->op);
@@ -61,4 +84,5 @@ void traitementQList( struct quad_list* q_list)
 			tmp_list = tmp_list->next;
 		}while (tmp_list!= NULL);
 	}
+// 	printf("");
 }

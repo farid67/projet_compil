@@ -79,11 +79,15 @@ struct symbol* new_cst (struct symbol** tds, int val)
 
 struct symbol* symbol_add (struct symbol** tds, char* nom)
 {
+	char* nom_secure = malloc( (strlen(nom)) * sizeof (char));
+	nom_secure = strdup(nom);
+	nom_secure[strlen(nom)] = '_';
+	
 	if (*tds == NULL)
 	{
 		// printf("ici\n");
 		*tds = alloc();
-		(*tds)->name = strdup (nom);
+		(*tds)->name = strdup (nom_secure);
 		(*tds)->isConstant = 0;
 		(*tds)->isVar=1;
 		return *tds;
@@ -96,7 +100,7 @@ struct symbol* symbol_add (struct symbol** tds, char* nom)
 			tmp = tmp->next;
 		}
 		tmp->next = alloc();
-		tmp->next->name = strdup(nom);
+		tmp->next->name = strdup(nom_secure);
 		tmp->next->isConstant = 0;
 		tmp->next->isVar=1;
 		return tmp->next;

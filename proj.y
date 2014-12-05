@@ -38,7 +38,7 @@
 %token <identificateur> ID
 %type <code_gen> declaration instruction en_tete prg stenc liste_inst
 %type <expression> expr
-%token <keyword> INT CONST IF ELSE WHILE FOR STENCIL PRINTF PRINTI MAIN RETURN
+%token <keyword> INT CONST IF ELSE WHILE FOR STENCIL PRINTI MAIN RETURN
 
 
 %%
@@ -123,6 +123,47 @@ instruction:	INT declaration ';'
 				concat (&$$.code,$2.code);
 				concat (&$$.code,$4.code);
 			}
+		| PRINTI '(' expr ')' ';'
+			{
+				$$.code = NULL;
+				
+				/********************************************************
+				 *
+				 * 	Pour afficher une valeur avec mips, on stocke la 
+				 * 	valeur que l'on veut afficher dans $a0 et on 
+				 * 	demande l'appel système numéro 1
+				 * 
+				*********************************************************/
+				
+				
+				// d'abord on stocke la valeur que l'on veut afficher dans le registre $a0
+				
+				struct symbol* tmp = new_tmp(&tds);
+				tmp->value = 4;  // Le registre numéro 4 correspond à $a0
+				
+				struct quad* q_li_a0 = new_quad(label_quad,"li",$3,NULL,tmp);
+				label_quad ++;
+				
+				// on demande l'appel système numéro 1 -> on le stocke dans $v0
+				struct symbol* tmp1 = new_tmp(&tds);
+				tmp1 -> value = 1;
+				
+				struct symbol* tmpv0 = new_tmp(&tds);
+				tmpv0->value = 2; // 2-> $v0
+				
+				struct quad* q_li_v0 = new_quad(label_quad,"li",tmp1,NULL,tmpv0);
+				
+				struct quad* sys = new_quad(label_quad,"syscall",NULL,NULL,NULL);
+				label_quad++;
+				
+				
+				// on stocke les quads crées 
+				quad_add(&$$.code,q_li_a0);
+				quad_add(&$$.code,q_li_v0);
+				quad_add(&$$.code,sys);
+				
+				
+			}
 		| RETURN expr ';' // amélioration faire un return i par exemple, dans ce cas faire un test de expr (contenu dans return expr) et si l'expression
 				// est un entier -> champ is constante à 1, alors on stocke la valeur contenu dans expr->value sinon on fait un move avec la variable
 			{
@@ -179,7 +220,7 @@ declaration :	ID '=' expr
 				
 				
 				// affecter une valeur à une variable entière <=> li en mips
-				struct quad* q_assign = new_quad(label_quad,"li",$3,NULL,s);
+				struct quad* q_assign = new_quad(label_quad,"=",$3,NULL,s);
 				label_quad++;
 				
 				quad_add (&$$.code, q_assign);
@@ -240,8 +281,9 @@ int main()
 	fprintf(stderr,"\n\nfin analyse\n");
 	fprintf(stderr,"\n---> Début traitement\n\n");
 	
-	traitementTds(tds);
 	traitementQList(q_Globallist);
+	traitementTds(tds);
+	
 	
 	return 0;
 }

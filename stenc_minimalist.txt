@@ -4,5 +4,6 @@ const int width = 128;
 int main()
 {
 	int i = 0,j;
+	printi(10);
 	return 0;
 }
