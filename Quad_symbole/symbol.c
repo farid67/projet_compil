@@ -85,6 +85,7 @@ struct symbol* symbol_add (struct symbol** tds, char* nom)
 		*tds = alloc();
 		(*tds)->name = strdup (nom);
 		(*tds)->isConstant = 0;
+		(*tds)->isVar=1;
 		return *tds;
 	}
 	else
@@ -96,6 +97,8 @@ struct symbol* symbol_add (struct symbol** tds, char* nom)
 		}
 		tmp->next = alloc();
 		tmp->next->name = strdup(nom);
+		tmp->next->isConstant = 0;
+		tmp->next->isVar=1;
 		return tmp->next;
 	}
 }

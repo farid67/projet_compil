@@ -178,6 +178,19 @@ declaration :	INT ID '=' expr
 				
 				quad_add (&$$.code, q_assign);
 			}
+		|INT ID
+			{
+				$$.code = NULL;
+				struct symbol* s = symbol_lookup(tds,$2);
+				if (s == NULL)
+				{
+					s = symbol_add(&tds,$2);	
+				}
+				s->isConstant = 0;
+				
+				// en mettant le champ arg1 à un null on sait que c'est une déclaration sans initialisation -> pas besoin de faire de quad
+
+			}
 		;
 
 		

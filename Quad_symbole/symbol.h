@@ -10,6 +10,7 @@ struct symbol
 	char* name;
 	int isConstant;
 	int value;
+	int isVar ; // permet de différencier les variables de type i,j.. et autres identificateurs des variables utilisées pour les goto
 	struct symbol* next;
 };
 
