@@ -67,6 +67,7 @@
 	#include <stdio.h>
 	#include <string.h>
 	#include "quad.h"
+	#include "stenc.h"
 	int yylex();
 	int yyerror();
 
@@ -74,11 +75,11 @@
 	// déclaration des variables globales
 	struct symbol* tds = NULL;
 
-	// struct quad_list* q_list = NULL;
+	struct quad_list* q_Globallist = NULL;
 
 	int label_quad=1;
 
-#line 82 "y.tab.c" /* yacc.c:339  */
+#line 83 "y.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -148,7 +149,7 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 18 "proj.y" /* yacc.c:355  */
+#line 19 "proj.y" /* yacc.c:355  */
 
 	int value;
 	char* identificateur;
@@ -165,7 +166,7 @@ union YYSTYPE
 	char* keyword;
 	
 
-#line 169 "y.tab.c" /* yacc.c:355  */
+#line 170 "y.tab.c" /* yacc.c:355  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -180,7 +181,7 @@ int yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 184 "y.tab.c" /* yacc.c:358  */
+#line 185 "y.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -420,18 +421,18 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  7
+#define YYFINAL  3
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   9
+#define YYLAST   26
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  18
+#define YYNTOKENS  22
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  4
+#define YYNNTS  8
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  6
+#define YYNRULES  12
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  13
+#define YYNSTATES  30
 
 /* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
    by yylex, with out-of-bounds checking.  */
@@ -449,15 +450,15 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,    16,
-       2,    17,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      18,    19,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,    17,
+       2,    16,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,    20,     2,    21,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -479,7 +480,8 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    45,    45,    58,    68,    91,   102
+       0,    46,    46,    62,    66,    83,    98,   102,   112,   119,
+     159,   182,   193
 };
 #endif
 
@@ -490,7 +492,8 @@ static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "NUMERO", "ID", "INT", "CONST", "IF",
   "ELSE", "WHILE", "FOR", "STENCIL", "PRINTF", "PRINTI", "MAIN", "RETURN",
-  "';'", "'='", "$accept", "instruction", "declaration", "expr", YY_NULLPTR
+  "'='", "';'", "'('", "')'", "'{'", "'}'", "$accept", "stenc", "en_tete",
+  "prg", "liste_inst", "instruction", "declaration", "expr", YY_NULLPTR
 };
 #endif
 
@@ -500,14 +503,15 @@ static const char *const yytname[] =
 static const yytype_uint16 yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
-     265,   266,   267,   268,   269,   270,    59,    61
+     265,   266,   267,   268,   269,   270,    61,    59,    40,    41,
+     123,   125
 };
 # endif
 
-#define YYPACT_NINF -11
+#define YYPACT_NINF -12
 
 #define yypact_value_is_default(Yystate) \
-  (!!((Yystate) == (-11)))
+  (!!((Yystate) == (-12)))
 
 #define YYTABLE_NINF -1
 
@@ -518,8 +522,9 @@ static const yytype_uint16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-      -5,     0,    -5,     5,   -10,    -9,   -11,   -11,   -11,    -1,
-     -11,   -11,   -11
+     -12,     5,    -4,   -12,    -8,     2,   -12,   -10,     7,    -7,
+      -3,   -11,    11,   -12,    -2,    -5,   -12,    13,     0,   -12,
+     -12,     1,     3,   -12,   -12,     4,   -12,     0,   -12,   -12
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -527,20 +532,21 @@ static const yytype_int8 yypact[] =
      means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     0,     0,     0,     0,     0,     3,     1,     2,     0,
-       6,     5,     4
+       3,     0,     0,     1,     0,     0,     2,     0,     0,     0,
+       0,     0,     0,     6,     0,     0,     4,     0,     0,     5,
+       7,     0,     0,    12,    11,     0,     8,     0,     9,    10
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -11,   -11,     7,   -11
+     -12,   -12,   -12,   -12,   -12,   -12,   -12,    -1
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     3,     4,    12
+      -1,     1,     2,     6,    15,    20,    21,    25
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -548,32 +554,39 @@ static const yytype_int8 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_uint8 yytable[] =
 {
-       1,     2,    10,    11,     5,     7,     8,     0,     9,     6
+      17,     4,     5,    23,    24,     3,     7,     8,     9,    13,
+      18,    10,    11,    12,    14,    16,    19,    22,    26,    27,
+       0,    28,     0,     0,     0,     0,    29
 };
 
 static const yytype_int8 yycheck[] =
 {
-       5,     6,     3,     4,     4,     0,    16,    -1,    17,     2
+       5,     5,     6,     3,     4,     0,    14,     5,    18,    20,
+      15,     4,    19,    16,     3,    17,    21,     4,    17,    16,
+      -1,    17,    -1,    -1,    -1,    -1,    27
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,     5,     6,    19,    20,     4,    20,     0,    16,    17,
-       3,     4,    21
+       0,    23,    24,     0,     5,     6,    25,    14,     5,    18,
+       4,    19,    16,    20,     3,    26,    17,     5,    15,    21,
+      27,    28,     4,     3,     4,    29,    17,    16,    17,    29
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    18,    19,    20,    20,    21,    21
+       0,    22,    23,    24,    24,    25,    26,    26,    27,    27,
+      28,    29,    29
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
-       0,     2,     2,     2,     4,     1,     1
+       0,     2,     2,     0,     7,     7,     0,     2,     2,     3,
+       4,     1,     1
 };
 
 
@@ -1250,35 +1263,134 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 46 "proj.y" /* yacc.c:1646  */
+#line 47 "proj.y" /* yacc.c:1646  */
+    {
+				(yyval.code_gen).code = NULL;
+				
+				concat (&(yyval.code_gen).code,(yyvsp[-1].code_gen).code);
+				concat (&(yyval.code_gen).code,(yyvsp[0].code_gen).code);
+				
+				concat(&q_Globallist,(yyval.code_gen).code);
+				
+/* 				print_tds(tds); */
+/* 				quad_list_print($$.code); */
+			}
+#line 1279 "y.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 3:
+#line 62 "proj.y" /* yacc.c:1646  */
+    {
+				(yyval.code_gen).code= NULL;
+/* 				printf("aucune en-tête\n"); */
+			}
+#line 1288 "y.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 4:
+#line 67 "proj.y" /* yacc.c:1646  */
+    {
+/* 				printf("en-tête détectée\n"); */
+				(yyval.code_gen).code = NULL;
+				
+				struct symbol* s = symbol_lookup(tds,(yyvsp[-3].identificateur));
+				if (s == NULL)
+				{
+					s = symbol_add(&tds,(yyvsp[-3].identificateur));	
+				}
+				s->isConstant = 1;
+				s->value = (yyvsp[-1].value);
+				
+			}
+#line 1306 "y.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 5:
+#line 84 "proj.y" /* yacc.c:1646  */
+    {
+				// début du programme avec la fonction principale
+				
+					
+				(yyval.code_gen).code = NULL;
+				// création d'un quad pour le main -> voir comment faire pour avoir l'étiquette etc
+				concat(&(yyval.code_gen).code,(yyvsp[-1].code_gen).code);
+				
+			}
+#line 1320 "y.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 6:
+#line 98 "proj.y" /* yacc.c:1646  */
+    {
+				// cas ou la liste d'instructions est vide
+				(yyval.code_gen).code = NULL;
+			}
+#line 1329 "y.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 7:
+#line 103 "proj.y" /* yacc.c:1646  */
+    {
+				(yyval.code_gen).code = NULL;
+				concat(&(yyval.code_gen).code,(yyvsp[-1].code_gen).code);
+				concat(&(yyval.code_gen).code,(yyvsp[0].code_gen).code);
+			}
+#line 1339 "y.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 8:
+#line 113 "proj.y" /* yacc.c:1646  */
     {
 				(yyval.code_gen).code = NULL;
 				concat(&(yyval.code_gen).code,(yyvsp[-1].code_gen).code);
 				
-				
-				print_tds(tds);
-				quad_list_print((yyval.code_gen).code);
 				// à chaque fois qu'on à remonté une liste de quad, on l'ajoute à la liste de quad "globale", et dans le main, on gére cette liste de quad?
 			}
-#line 1264 "y.tab.c" /* yacc.c:1646  */
+#line 1350 "y.tab.c" /* yacc.c:1646  */
     break;
 
-  case 3:
-#line 59 "proj.y" /* yacc.c:1646  */
+  case 9:
+#line 121 "proj.y" /* yacc.c:1646  */
     {
 				(yyval.code_gen).code = NULL;
+				// création d'un quad correspondant au exit dans le mips  
+				/********************************************************
+				 *
+				 * 	Pour un return dans le main, il faut utiliser
+				 * 	l'appel système 17 -> exit2 (with return value)
+				 * 
+				*********************************************************/
+				
+				// première quad -> affectation du code de retour à $a0
+				
+				struct symbol* tmp = new_tmp(&tds);
+				struct quad* q_returnCode = new_quad(label_quad,"li",(yyvsp[-1].expression),NULL,tmp);
+				label_quad++;
+				
+				// second quad -> affectation de 17 à $v0
+				
+				struct symbol* tmp17 = new_tmp(&tds);
+				tmp17 -> value = 17;
+				struct symbol* tmpv0 = new_tmp(&tds);
+				struct quad* q_return = new_quad(label_quad,"li",tmp17,NULL,tmpv0);
+				label_quad++;
+				
+				// 3ème quad -> syscall;
+				
+				struct quad* sys = new_quad(label_quad,"syscall",NULL,NULL,NULL);
+				label_quad++;
 				
 				
-				(yyvsp[0].code_gen).code->node->res->isConstant = 1;
-				
-				quad_add (&(yyval.code_gen).code,(yyvsp[0].code_gen).code->node);
+				quad_add(&(yyval.code_gen).code,q_returnCode);
+				quad_add(&(yyval.code_gen).code,q_return);
+				quad_add(&(yyval.code_gen).code,sys);
 				
 			}
-#line 1278 "y.tab.c" /* yacc.c:1646  */
+#line 1390 "y.tab.c" /* yacc.c:1646  */
     break;
 
-  case 4:
-#line 69 "proj.y" /* yacc.c:1646  */
+  case 10:
+#line 160 "proj.y" /* yacc.c:1646  */
     {
 				(yyval.code_gen).code = NULL;
 				// génération d'un quad qui sera celui de l'affectation
@@ -1298,11 +1410,11 @@ yyreduce:
 				
 				quad_add (&(yyval.code_gen).code, q_assign);
 			}
-#line 1302 "y.tab.c" /* yacc.c:1646  */
+#line 1414 "y.tab.c" /* yacc.c:1646  */
     break;
 
-  case 5:
-#line 92 "proj.y" /* yacc.c:1646  */
+  case 11:
+#line 183 "proj.y" /* yacc.c:1646  */
     {
 				// génération d'un symbole qui sera le nom du temporaire avec comme valeur 0 (fait par défaut)
 				struct symbol* s = symbol_lookup(tds,(yyvsp[0].identificateur));
@@ -1313,22 +1425,22 @@ yyreduce:
 				s->isConstant = 0;
 				(yyval.expression) = s;
 			}
-#line 1317 "y.tab.c" /* yacc.c:1646  */
+#line 1429 "y.tab.c" /* yacc.c:1646  */
     break;
 
-  case 6:
-#line 103 "proj.y" /* yacc.c:1646  */
+  case 12:
+#line 194 "proj.y" /* yacc.c:1646  */
     {
 				struct symbol* tmp = new_tmp (&tds);
 				tmp->value = (yyvsp[0].value);
 				(yyval.expression) = tmp;
 				
 			}
-#line 1328 "y.tab.c" /* yacc.c:1646  */
+#line 1440 "y.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1332 "y.tab.c" /* yacc.c:1646  */
+#line 1444 "y.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1556,7 +1668,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 112 "proj.y" /* yacc.c:1906  */
+#line 203 "proj.y" /* yacc.c:1906  */
 
 
 
@@ -1565,5 +1677,18 @@ int main()
 	printf ("-----------------------------------------------------\n");
 	printf("\t\tYacc Compilateur StenC:\n");
 	printf ("-----------------------------------------------------\n");
-	return yyparse();
+	if (yyparse())
+	{
+		printf("erreur\n");
+	}
+	
+	print_tds(tds); // effectuer un traitement sur cette liste des symboles
+	quad_list_print(q_Globallist);
+	
+	printf("\n\nfin analyse\n");
+	printf("\n\t Début traitement\n");
+	
+	traitementTds(tds);
+	
+	return 0;
 }

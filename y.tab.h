@@ -80,7 +80,7 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 18 "proj.y" /* yacc.c:1909  */
+#line 19 "proj.y" /* yacc.c:1909  */
 
 	int value;
 	char* identificateur;

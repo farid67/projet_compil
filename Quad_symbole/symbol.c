@@ -127,8 +127,11 @@ struct symbol* symbol_lookup (struct symbol * tds, char* nom)
 void print_s (struct symbol* s)
 {
 	if (s != NULL)
-	{	
-		printf("%s (%d)",s->name, s->value);
+	{
+		if (s->isConstant)
+			printf("%s (constante -> %d)",s->name, s->value);
+		else
+			printf("%s (%d)",s->name, s->value);
 	}
 	else
 	{

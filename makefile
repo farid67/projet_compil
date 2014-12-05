@@ -1,6 +1,9 @@
+rep1 = Quad_symbole
+rep2 = Stenc
+
 all:
 	yacc -d proj.y
 	lex proj.l	
-	gcc -g y.tab.c lex.yy.c Quad_symbole/symbol.c Quad_symbole/quad.c -ly -lfl -I Quad_symbole
+	gcc -g y.tab.c lex.yy.c $(rep1)/symbol.c $(rep1)/quad.c $(rep2)/stenc.c -ly -lfl -I $(rep1) -I $(rep2)
 clean:
 	rm -rf *.out y.tab.* lex.yy.*

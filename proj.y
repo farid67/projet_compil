@@ -2,6 +2,7 @@
 	#include <stdio.h>
 	#include <string.h>
 	#include "quad.h"
+	#include "stenc.h"
 	int yylex();
 	int yyerror();
 
@@ -9,7 +10,7 @@
 	// déclaration des variables globales
 	struct symbol* tds = NULL;
 
-	// struct quad_list* q_list = NULL;
+	struct quad_list* q_Globallist = NULL;
 
 	int label_quad=1;
 %}
@@ -49,9 +50,10 @@ stenc:		en_tete prg
 				concat (&$$.code,$1.code);
 				concat (&$$.code,$2.code);
 				
+				concat(&q_Globallist,$$.code);
 				
-				print_tds(tds);
-				quad_list_print($$.code);
+/* 				print_tds(tds); */
+/* 				quad_list_print($$.code); */
 			}
 		;
 
@@ -59,18 +61,20 @@ stenc:		en_tete prg
 en_tete:	
 			{
 				$$.code= NULL;
-				printf("aucune en-tête\n");
+/* 				printf("aucune en-tête\n"); */
 			}
-		|en_tete CONST declaration ';'
+		|en_tete CONST INT ID '=' NUMERO ';' // au vu du MIPS, ce n'est pas une instruction de load int, on crée juste une étiquette avec le nom du symbole et sa valeur
 			{
-				printf("en-tête détectée\n");
+/* 				printf("en-tête détectée\n"); */
 				$$.code = NULL;
 				
-				
-				$3.code->node->res->isConstant = 1;
-				
-				concat(&$$.code, $1.code);
-				quad_add (&$$.code,$3.code->node);
+				struct symbol* s = symbol_lookup(tds,$4);
+				if (s == NULL)
+				{
+					s = symbol_add(&tds,$4);	
+				}
+				s->isConstant = 1;
+				s->value = $6;
 				
 			}
 		;
@@ -204,5 +208,18 @@ int main()
 	printf ("-----------------------------------------------------\n");
 	printf("\t\tYacc Compilateur StenC:\n");
 	printf ("-----------------------------------------------------\n");
-	return yyparse();
+	if (yyparse())
+	{
+		printf("erreur\n");
+	}
+	
+	print_tds(tds); // effectuer un traitement sur cette liste des symboles
+	quad_list_print(q_Globallist);
+	
+	printf("\n\nfin analyse\n");
+	printf("\n\t Début traitement\n");
+	
+	traitementTds(tds);
+	
+	return 0;
 }

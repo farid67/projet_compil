@@ -858,21 +858,23 @@ YY_RULE_SETUP
 				return ID;
 			}
 	YY_BREAK
+case YY_STATE_EOF(INITIAL):
+#line 42 "proj.l"
+{ yyterminate();}
+	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 42 "proj.l"
+#line 43 "proj.l"
 {
 				printf("Caractère non reconnu par Lex %s, ligne %d\n",yytext,compteur_ligne);
 			}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 46 "proj.l"
+#line 47 "proj.l"
 ECHO;
 	YY_BREAK
-#line 874 "lex.yy.c"
-case YY_STATE_EOF(INITIAL):
-	yyterminate();
+#line 878 "lex.yy.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1868,7 +1870,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 46 "proj.l"
+#line 47 "proj.l"
 
 
 
