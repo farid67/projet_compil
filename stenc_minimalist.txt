@@ -1,0 +1,7 @@
+const int height = 128;
+const int width = 128;
+
+int main()
+{
+	return 0;
+}
