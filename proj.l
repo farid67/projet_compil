@@ -39,6 +39,7 @@ return			{return RETURN;}
 /* 				printf("identificateur reconnu\n"); */
 				return ID;
 			}
+<<EOF>>			{ yyterminate();}
 .			{
 				printf("Caractère non reconnu par Lex %s, ligne %d\n",yytext,compteur_ligne);
 			}
