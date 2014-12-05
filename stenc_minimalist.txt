@@ -3,6 +3,6 @@ const int width = 128;
 
 int main()
 {
-	int i = 0;
+	int i = 0,j;
 	return 0;
 }

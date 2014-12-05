@@ -110,12 +110,18 @@ liste_inst :
 		
 		
 
-instruction:	declaration ';'
+instruction:	INT declaration ';'
 			{
 				$$.code = NULL;
-				concat(&$$.code,$1.code);
+				concat(&$$.code,$2.code);
 				
 				// à chaque fois qu'on à remonté une liste de quad, on l'ajoute à la liste de quad "globale", et dans le main, on gére cette liste de quad?
+			}
+		|INT declaration ',' declaration ';'
+			{
+				$$.code=NULL;
+				concat (&$$.code,$2.code);
+				concat (&$$.code,$4.code);
 			}
 		| RETURN expr ';' // amélioration faire un return i par exemple, dans ce cas faire un test de expr (contenu dans return expr) et si l'expression
 				// est un entier -> champ is constante à 1, alors on stocke la valeur contenu dans expr->value sinon on fait un move avec la variable
@@ -158,33 +164,33 @@ instruction:	declaration ';'
 		;
 
 
-declaration :	INT ID '=' expr
+declaration :	ID '=' expr
 			{
 				$$.code = NULL;
 				// génération d'un quad qui sera celui de l'affectation
 				
 				// génération d'un symbole qui sera le nom du temporaire avec comme valeur 0 (fait par défaut)
-				struct symbol* s = symbol_lookup(tds,$2);
+				struct symbol* s = symbol_lookup(tds,$1);
 				if (s == NULL)
 				{
-					s = symbol_add(&tds,$2);	
+					s = symbol_add(&tds,$1);	
 				}
 				s->isConstant = 0;
 				
 				
 				// affecter une valeur à une variable entière <=> li en mips
-				struct quad* q_assign = new_quad(label_quad,"li",$4,NULL,s);
+				struct quad* q_assign = new_quad(label_quad,"li",$3,NULL,s);
 				label_quad++;
 				
 				quad_add (&$$.code, q_assign);
 			}
-		|INT ID
+		|ID
 			{
 				$$.code = NULL;
-				struct symbol* s = symbol_lookup(tds,$2);
+				struct symbol* s = symbol_lookup(tds,$1);
 				if (s == NULL)
 				{
-					s = symbol_add(&tds,$2);	
+					s = symbol_add(&tds,$1);	
 				}
 				s->isConstant = 0;
 				
