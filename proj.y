@@ -1,4 +1,5 @@
 %{
+	#define STDOUT 0
 	#include <stdio.h>
 	#include <string.h>
 	#include "quad.h"
@@ -128,17 +129,18 @@ instruction:	declaration ';'
 				 * 
 				*********************************************************/
 				
-				// première quad -> affectation du code de retour à $a0
+				// première quad -> affectation du code de retour à $a0 -> le symbole resultat peut contenir comme valeur le numero du registre
 				
 				struct symbol* tmp = new_tmp(&tds);
+				tmp->value = 4;  // Le registre numéro 4 correspond à $a0
 				struct quad* q_returnCode = new_quad(label_quad,"li",$2,NULL,tmp);
 				label_quad++;
 				
 				// second quad -> affectation de 17 à $v0
-				
 				struct symbol* tmp17 = new_tmp(&tds);
 				tmp17 -> value = 17;
 				struct symbol* tmpv0 = new_tmp(&tds);
+				tmpv0 -> value = 2; // $v0 = registre numéro 2
 				struct quad* q_return = new_quad(label_quad,"li",tmp17,NULL,tmpv0);
 				label_quad++;
 				
@@ -205,21 +207,22 @@ expr : 		ID
 
 int main()
 {
-	printf ("-----------------------------------------------------\n");
-	printf("\t\tYacc Compilateur StenC:\n");
-	printf ("-----------------------------------------------------\n");
+/* 	printf ("-----------------------------------------------------\n"); */
+/* 	printf("\t\tYacc Compilateur StenC:\n"); */
+/* 	printf ("-----------------------------------------------------\n"); */
 	if (yyparse())
 	{
-		printf("erreur\n");
+		fprintf(stdout,"erreur\n");
 	}
 	
-	print_tds(tds); // effectuer un traitement sur cette liste des symboles
-	quad_list_print(q_Globallist);
+/* 	print_tds(tds); // effectuer un traitement sur cette liste des symboles */
+/* 	quad_list_print(q_Globallist); */
 	
-	printf("\n\nfin analyse\n");
-	printf("\n\t Début traitement\n");
+	fprintf(stderr,"\n\nfin analyse\n");
+	fprintf(stderr,"\n---> Début traitement\n\n");
 	
 	traitementTds(tds);
+	traitementQList(q_Globallist);
 	
 	return 0;
 }
