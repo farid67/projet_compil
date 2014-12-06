@@ -12,11 +12,19 @@ void quad_add(struct quad_list** liste, struct quad* new)
 	{
 		struct quad* tmp;
 		tmp = (*liste)->node;
-		while (tmp->next != NULL)
+		while (tmp->next != NULL && tmp->label < new->label)
 		{
 			tmp = tmp->next;
 		}
 		tmp->next = new_quad(new->label,new->op,new->arg1,new->arg2,new->res);
+		
+// 		tmp = tmp->next; // tmp pointe sur le quad ajouté
+// 		// pour décaler les labels;
+// 		do
+// 		{
+// 			tmp = tmp->next;
+// 			tmp->label = tmp->label +1;
+// 		}while (tmp!=NULL);
 	}
 }
 
@@ -91,12 +99,23 @@ struct quad_list* new_quad_list(struct quad* n)
 }
 
 
-/*
-struct quad* next_quad(struct quad*node)
+
+int next_quad(struct quad_list* q_list)
 {
-	return node->next;
+	if (q_list==NULL)
+	{
+		return 1;
+	}
+	struct quad* tmp = q_list->node;
+	while (tmp->next !=NULL) 
+	{
+		tmp = tmp->next;
+	}
+	
+	return tmp->label +1;
+	
 }
-*/
+
 
 void complete(struct quad_list** liste , int label_goto)
 {
@@ -134,12 +153,25 @@ void concat(struct quad_list** l1, struct quad_list* l2)
 		*l1=l2;
 		return;
 	}
-
+	
+	int next_label = next_quad(*l1);
+	
 	tmp = (*l1)->node;
 	while (tmp->next != NULL)
 	{
 		tmp = tmp->next;
 	}
 	tmp->next = l2->node;
+	
+	// décalage des numéro des quads en fonction de la valeur du dernier quad de l1
+	
+	
+	
+	while (tmp->next !=NULL)
+	{
+		tmp->next->label = next_label;
+		next_label ++;
+		tmp = tmp ->next;
+	}
 
 }

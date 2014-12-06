@@ -6,4 +6,4 @@ all:
 	lex proj.l	
 	gcc -g y.tab.c lex.yy.c $(rep1)/symbol.c $(rep1)/quad.c $(rep2)/stenc.c -ly -lfl -I $(rep1) -I $(rep2)
 clean:
-	rm -rf *.out y.tab.* lex.yy.*
+	rm -rf *.out y.tab.* lex.yy.* *~

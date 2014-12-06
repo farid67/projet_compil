@@ -2,9 +2,9 @@
 	.globl main
 
 main:
-	li $v0 0
+	li $v0 9
 	sw $v0 i_
-	li $a0 10
+	lw $a0 i_
 	li $v0 1
 	syscall
 	li $a0 0

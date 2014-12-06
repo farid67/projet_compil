@@ -56,7 +56,7 @@ struct quad_list* new_quad_list (struct quad* n);
 void quad_list_print(struct quad_list* ql);
 
 
-// struct quad* next_quad (struct quad* node); // renvoie un pointeur sur le prochain quad
+int next_quad (struct quad_list* q_list); // renvoie un entier correspondant au label du quad se trouvant après une liste de quad
 
 
 // la méthode complete parcours la liste de quads et remplace chaque symbole "resultat" des noeuds par le pointeur passé en paramètre

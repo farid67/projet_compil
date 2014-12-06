@@ -111,6 +111,9 @@ struct symbol* symbol_add (struct symbol** tds, char* nom)
 
 struct symbol* symbol_lookup (struct symbol * tds, char* nom)
 {
+	char* nom_secure = malloc( (strlen(nom)) * sizeof (char));
+	nom_secure = strdup(nom);
+	nom_secure[strlen(nom)] = '_';
 	if (tds == NULL)
 	{
 		return (struct symbol*) NULL;
@@ -120,7 +123,7 @@ struct symbol* symbol_lookup (struct symbol * tds, char* nom)
 		struct symbol* tmp = tds;
 		do
 		{
-			if (tmp->name !=NULL && strcmp(tmp->name,nom)== 0)
+			if (tmp->name !=NULL && strcmp(tmp->name,nom_secure)== 0)
 			{
 				return tmp;
 			}

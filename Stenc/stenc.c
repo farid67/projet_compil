@@ -62,18 +62,20 @@ void traitementQList( struct quad_list* q_list)
 					printf("\tsw $v0 %s\n",tmp->res->name);
 				}
 				
-// 				else if (strcmp(tmp->op,"printi") ==0)
-// 				{
-// 					// dépend de ce que l'on veut afficher, si c'est une variable il faut faire un load word 
-// 					if (tmp->arg1->isVar)
-// 					{
-// 						printf("\tlw $a0 %s",tmp->arg1->name);
-// 					}
-// 					else
-// 					{
-// 						printf("\tli $a0 %d",tmp->arg1->value);
-// 					}
-// 				}
+				else if (strcmp(tmp->op,"lw") ==0 ) // l'argument est forcément une variable
+				{
+					printf("\tlw ");
+					switch (tmp->res->value)
+					{
+						case 2:
+							printf("$v0 ");
+							break;
+						case 4:
+							printf("$a0 ");
+							break;
+					}
+					printf("%s\n",tmp->arg1->name);
+				}
 				
 				else if (strcmp(tmp->op,"syscall") == 0)
 				{

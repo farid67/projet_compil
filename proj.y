@@ -141,8 +141,21 @@ instruction:	INT declaration ';'
 				struct symbol* tmp = new_tmp(&tds);
 				tmp->value = 4;  // Le registre numéro 4 correspond à $a0
 				
-				struct quad* q_li_a0 = new_quad(label_quad,"li",$3,NULL,tmp);
+				// dépend de expr
+				char* op;
+				
+				if ($3->isVar)
+				{
+					op = "lw";
+				}
+				else
+				{
+					op = "li";
+				}
+				
+				struct quad* q_li_a0 = new_quad(label_quad,op,$3,NULL,tmp);
 				label_quad ++;
+				
 				
 				// on demande l'appel système numéro 1 -> on le stocke dans $v0
 				struct symbol* tmp1 = new_tmp(&tds);

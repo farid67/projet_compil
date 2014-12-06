@@ -3,7 +3,7 @@ const int width = 128;
 
 int main()
 {
-	int i = 9,j;
+	int i=9,j;
 	printi(i);
 	return 0;
 }
