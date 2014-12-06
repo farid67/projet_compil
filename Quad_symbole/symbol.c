@@ -41,6 +41,16 @@ struct symbol* new_tmp (struct symbol** tds)
 	return n;
 }
 
+struct symbol* new_tmp_tab_element (char* nom, int i)
+{
+	struct symbol* n = alloc();
+	n->name = (char*) malloc ((strlen(nom) + 10) * sizeof (char));
+	sprintf(n->name,"%s_%d",nom,i);
+	n->isVar=2; // élément de tableau 
+	
+	return n;
+}
+
 struct symbol* new_cst (struct symbol** tds, int val)
 {
 	struct symbol* cst = alloc();
@@ -79,7 +89,7 @@ struct symbol* new_cst (struct symbol** tds, int val)
 
 struct symbol* symbol_add (struct symbol** tds, char* nom)
 {
-	char* nom_secure = malloc( (strlen(nom)) * sizeof (char));
+	char* nom_secure = malloc( (strlen(nom)+1) * sizeof (char));
 	nom_secure = strdup(nom);
 	nom_secure[strlen(nom)] = '_';
 	
@@ -111,7 +121,7 @@ struct symbol* symbol_add (struct symbol** tds, char* nom)
 
 struct symbol* symbol_lookup (struct symbol * tds, char* nom)
 {
-	char* nom_secure = malloc( (strlen(nom)) * sizeof (char));
+	char* nom_secure = malloc( (strlen(nom)+1) * sizeof (char));
 	nom_secure = strdup(nom);
 	nom_secure[strlen(nom)] = '_';
 	if (tds == NULL)
@@ -138,8 +148,10 @@ void print_s (struct symbol* s)
 {
 	if (s != NULL)
 	{
-		if (s->isConstant)
+		if (s->isConstant==1)
 			printf("%s (constante -> %d)",s->name, s->value);
+		else if (s->isVar ==2)
+			printf("%s (element de tableau -> %d)",s->name, s->value);
 		else
 			printf("%s (%d)",s->name, s->value);
 	}
@@ -168,4 +180,83 @@ void print_tds(struct symbol* tds)
 		}while (tmp!= NULL);
 	}
 
+}
+
+
+void tab_add (struct symbol** tds, struct symbol* tab)
+{
+	// parcourir la table des symbole et ajouter le symbole en queue de liste 
+	if (*tds == NULL)
+	{
+		*tds = tab;
+		// tds = (struct symbol **) malloc (sizeof(struct symbol*));
+	}
+
+	else
+	{
+		struct symbol* tmp = *tds;
+
+		while (tmp -> next != NULL)
+		{
+			tmp = tmp -> next;
+		}
+		tmp -> next = tab;
+	}
+}
+
+
+struct symbol* new_tab (char* nom, int* dim, int nb_dim)
+{
+	
+	// ajout d'un symbole "tampon" qui délimitera le début du tableau
+	
+	struct symbol* tampon = alloc();
+	
+	tampon -> name = strdup(nom);
+	tampon -> isConstant = 2; // isConst à 2 signifie qu'on a un symbole tampon -> utile juste pour créer l'étiquette sous mips
+	
+	
+// 	struct symbol* init = alloc();
+// 	char* nom_init = strdup(nom);
+// 	nom_init = realloc (nom_init,sizeof ( (strlen(nom) + 2) *  sizeof(char) ));
+	
+	
+	// génération du nom 
+	
+
+// 	nom_init[strlen(nom) ] = '_';
+// 	nom_init[strlen(nom) + 1] = '0';
+	
+	
+// 	init->name = nom_init;
+	
+// 	init -> isVar = 2;// init est un élément de tableau
+	
+	
+	// création de n autres symboles
+	
+	int nb_symbole = 1,i;
+	
+	
+	for (i = 0; i < nb_dim; i++)
+	{
+		nb_symbole *= dim[i];
+	}
+	
+	
+	tampon->value = nb_symbole;
+	
+	struct symbol * it = tampon; // init pointe sur le premier symbole créé
+	
+	
+	for (i = 0 ; i < nb_symbole; i++)
+	{
+		struct symbol* tmp = new_tmp_tab_element(nom,i);
+		it -> next = tmp;
+		it = it -> next;
+	}
+	
+	return tampon;
+	
+	
 }

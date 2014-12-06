@@ -14,6 +14,8 @@
 	struct quad_list* q_Globallist = NULL;
 
 	int label_quad=1;
+	
+	
 %}
 
 %union
@@ -32,13 +34,21 @@
 	struct symbol* expression;
 	char* keyword;
 	
+	struct
+	{
+		int* dim_size;
+		int nb_dimension;
+	}tab;
+	
 }
 
-%token <value> NUMERO
+%token <value> ZERO SIZE
+%type <value> NUMERO
 %token <identificateur> ID
 %type <code_gen> declaration instruction en_tete prg stenc liste_inst
-%type <expression> expr
-%token <keyword> INT CONST IF ELSE WHILE FOR STENCIL PRINTI MAIN RETURN 
+%type <expression> expr expr_tab
+%type <tab> TAB
+%token <keyword> INT CONST IF ELSE WHILE FOR STENCIL PRINTI MAIN RETURN
 
 
 %%
@@ -55,10 +65,6 @@ stenc:		en_tete prg
 /* 				print_tds(tds); */
 /* 				quad_list_print($$.code); */
 			}
-		/*|COMM
-			{
-				$$.code = NULL;
-			}*/
 		;
 
 
@@ -241,6 +247,12 @@ declaration :	ID '=' expr
 				
 				quad_add (&$$.code, q_assign);
 			}
+		|ID TAB
+			{
+				$$.code = NULL;
+				struct symbol* tab = new_tab($1,$2.dim_size,$2.nb_dimension);
+				tab_add(&tds,tab);
+			}
 		|ID
 			{
 				$$.code = NULL;
@@ -254,8 +266,51 @@ declaration :	ID '=' expr
 				// en mettant le champ arg1 à un null on sait que c'est une déclaration sans initialisation -> pas besoin de faire de quad
 
 			}
+		
 		;
 
+TAB:		'[' expr_tab ']'
+			{
+				$$.nb_dimension = 0;
+				int* d = malloc (sizeof (int));
+				d[0] = $2->value;
+				$$.nb_dimension ++;
+				$$.dim_size = d;
+			}
+		|TAB '[' expr_tab ']'
+			{
+				int*d  =  realloc($1.dim_size,$1.nb_dimension +1);
+				d[$1.nb_dimension] = $3->value;
+				$$.nb_dimension = $1.nb_dimension+1;
+				$$.dim_size = d;
+				// realloc + une case et écriture
+			}
+		;
+
+expr_tab :	// exemple : int tab[]
+			{
+				struct symbol* tmp = new_tmp (&tds);
+				tmp->value = 0;
+				$$ = tmp;
+			}
+		|ID
+			{
+				// génération d'un symbole qui sera le nom du temporaire avec comme valeur 0 (fait par défaut)
+				struct symbol* s = symbol_lookup(tds,$1);
+				if (s == NULL)
+				{
+					s = symbol_add(&tds,$1);	
+				}
+				s->isConstant = 0;
+				$$ = s;
+			}
+		|SIZE
+			{
+				struct symbol* tmp = new_tmp (&tds);
+				tmp->value = $1;
+				$$ = tmp;
+			}
+		;
 		
 expr : 		ID
 			{
@@ -274,6 +329,16 @@ expr : 		ID
 				tmp->value = $1;
 				$$ = tmp;
 				
+			}
+		;
+		
+NUMERO:		SIZE
+			{
+				$$ = $1;
+			}
+		|ZERO
+			{
+				$$ = $1;
 			}
 		;
 

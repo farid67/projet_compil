@@ -31,10 +31,14 @@ const			{return CONST;}
 printi			{return PRINTI;}
 main			{return MAIN;}
 return			{return RETURN;}
-[0-9]+			{
+[1-9]+[0-9]*		{// éviter qu'on écrive tab[0] pour la déclaration
 				yylval.value = atoi(yytext);
+				return SIZE;
+			}
+[0]			{
+				yylval.value = 0;
 /* 				printf("entier reconnu\n"); */
-				return NUMERO;
+				return ZERO;
 			}
 [a-zA-Z][a-zA-Z_0-9]*	{
 				yylval.identificateur = strdup (yytext);
@@ -61,3 +65,9 @@ return			{return RETURN;}
 	
 /* 	return 0; */
 // }
+
+
+// [1-9]+[0-9]*		{// éviter qu'on écrive tab[0] pour la déclaration
+// 				yylval.value = atoi(yytext);
+// 				return SIZE;
+// 			}

@@ -3,7 +3,5 @@ const int width = 128;
 
 int main()
 {
-	int i = 9,j;
-	printi(i);
-	return 0;
+	int tab[2];
 }

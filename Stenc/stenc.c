@@ -9,10 +9,23 @@ void traitementTds( struct symbol* tds)
 		struct symbol* tmp = tds;
 		do
 		{
-			if (tmp->isConstant || tmp->isVar)
+			if (tmp->isConstant==1 || tmp->isVar)
 			{
-				printf("%s:	.word %d\n",tmp->name,tmp->value);
+				printf("%s:\t.word %d\n",tmp->name,tmp->value);
 			}
+			
+			if (tmp->isConstant == 2) // tampon
+			{
+				printf("%s:\t.word ",tmp->name);
+				int i,nb_elem = tmp->value;
+				for (i = 0; i < nb_elem;i++)
+				{
+					tmp=tmp->next;
+					printf("%d ",tmp->value);
+				}
+				printf("\n");
+			}
+			
 			tmp = tmp->next;
 		}while (tmp!= NULL);
 		printf("\n");
