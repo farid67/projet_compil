@@ -10,6 +10,8 @@
 
 space_newLine	[ \t\n]*
 nonAlphaNum	["+""\-""/""{""}"","";""=""$""\[""\]""\(""\)""&"">""<""!""|"]
+commentaire	"/*"([^"*"]*["*"]+[^/*])*[^*]*[*]+"/"
+/* comm_ligne	"//".\n */
 
 
 %%
@@ -17,6 +19,7 @@ nonAlphaNum	["+""\-""/""{""}"","";""=""$""\[""\]""\(""\)""&"">""<""!""|"]
 
 
 {space_newLine} 	{if (strcmp(yytext,"\n") == 0) {compteur_ligne++;}}
+{commentaire}		{}
 {nonAlphaNum}		{return yytext[0];}
 int			{return INT ;}
 stencil			{return STENCIL;}

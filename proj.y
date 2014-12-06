@@ -38,11 +38,10 @@
 %token <identificateur> ID
 %type <code_gen> declaration instruction en_tete prg stenc liste_inst
 %type <expression> expr
-%token <keyword> INT CONST IF ELSE WHILE FOR STENCIL PRINTI MAIN RETURN
+%token <keyword> INT CONST IF ELSE WHILE FOR STENCIL PRINTI MAIN RETURN 
 
 
 %%
-
 
 stenc:		en_tete prg
 			{
@@ -56,6 +55,10 @@ stenc:		en_tete prg
 /* 				print_tds(tds); */
 /* 				quad_list_print($$.code); */
 			}
+		/*|COMM
+			{
+				$$.code = NULL;
+			}*/
 		;
 
 
