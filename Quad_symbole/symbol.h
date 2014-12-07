@@ -12,8 +12,12 @@ struct symbol
 	int value;
 	int isVar ; // permet de différencier les variables de type i,j.. et autres identificateurs des variables utilisées pour les goto
 	// si isVar = 2 alors le symbol est un élément de tableau
+	
+	int* dimension_size; // existe seulement pour les tampons
+	
 	struct symbol* next;
 };
+
 
 static int label_tmp=0;
 
@@ -39,12 +43,11 @@ void print_s (struct symbol* s);
 void print_tds(struct symbol* tds);
 
 
-// ajout d'un tableau en queue de table
+// ajout d'un tableau en queue de table des symboles
 void tab_add (struct symbol** tds, struct symbol* tab);
 
 // complete les éléments d'un tableau de la tds avec ce qui est contenu dans le tableau
-
-void tab_complete (struct symbol** tds, struct symbol** tab,int* tab_int);
+void tab_complete (struct symbol** tab,int* tab_int);
 
 
 

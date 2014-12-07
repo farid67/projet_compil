@@ -18,11 +18,13 @@ void traitementTds( struct symbol* tds)
 			{
 				printf("%s:\t.word ",tmp->name);
 				int i,nb_elem = tmp->value;
-				for (i = 0; i < nb_elem;i++)
+				for (i = 0; i < nb_elem-1;i++)
 				{
 					tmp=tmp->next;
-					printf("%d ",tmp->value);
+					printf("%d ,",tmp->value);
 				}
+				tmp = tmp->next;
+				printf("%d ",tmp->value);
 				printf("\n");
 			}
 			

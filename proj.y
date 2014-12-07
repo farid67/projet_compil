@@ -120,7 +120,12 @@ liste_inst :
 		
 		
 
-instruction:	INT declaration ';'
+instruction:	
+		declaration ';' //pour pouvoir écrire int i; puis i =5; par exemple
+			{
+				$$.code = NULL;
+			}
+		|INT declaration ';'
 			{
 				$$.code = NULL;
 				concat(&$$.code,$2.code);
@@ -228,7 +233,7 @@ instruction:	INT declaration ';'
 		;
 
 
-declaration :	ID '=' expr
+declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 			{
 				$$.code = NULL;
 				// génération d'un quad qui sera celui de l'affectation
@@ -248,12 +253,39 @@ declaration :	ID '=' expr
 				
 				quad_add (&$$.code, q_assign);
 			}
+		|ID TAB '=' expr // tab[2][3] = i; ou bien tab[2] = 0; 
+		// implique de faire un sw précédé eventuellement d'un li si l'expression est une variable	
+			{
+				$$.code = NULL;
+				// affectation d'une valeur à un élément du tableau
+				
+				// on vérifie que le tableau existe bien
+				
+				struct symbol* id = symbol_lookup(tds,$1);
+				if (id == NULL)
+				{
+					yyerror("Le tableau n'est pas été définis correctement\n");
+					return -1;
+				}
+				
+				
+				// tab contient un tableau d'entiers : i,j,k où i = l'entier contenu entre les premiers crochets...
+				
+				int i,index=0;
+				for (i = 0;i< $2.nb_dimension; i++)
+				{
+					index += id->dimension_size[i] * $2.tab[i] ;
+				}
+				
+				// si on arrive ici c'est que l'étiquette a bien été définie auparavant et on a l'index
+				
+				
+			}
 		|ID TAB
 			{
 				$$.code = NULL;
 				struct symbol* tab = new_tab($1,$2.tab,$2.nb_dimension);
 				tab_add(&tds,tab);
-				int i;
 			}
 		|ID TAB '=' '{' liste '}' // cas tableaux unidim
 		// nécessite de vérifier que le nombre d'éléments définis dans la liste correspond bien à ce qui est contenu dans tab
@@ -266,7 +298,7 @@ declaration :	ID '=' expr
 				tab_add(&tds,tab);
 				
 				// récupération des données contenues dans la liste entre les accolades 
-				tab_complete (&tds,&tab,$5.tab);
+				tab_complete (&tab,$5.tab);
 				
 			}
 		|ID TAB '=' '{' init '{' liste '}' '}' // cas tableaux multidimensionnel -> dimension > 2
@@ -286,7 +318,7 @@ declaration :	ID '=' expr
 				
 				
 				// on complète les élements contenus dans le tableau avec ce qu'on a récupéré de la liste d'initialisation
-				tab_complete (&tds,&tab,elem);
+				tab_complete (&tab,elem);
 			}
 		|ID
 			{
@@ -304,6 +336,28 @@ declaration :	ID '=' expr
 		
 		;
 
+		
+/*
+TAB_DECL:	// on différence 2 cas pour les tableaux car on ne peut pas définir un tableau avec 0 élements par contre on peut vouloir accéder à tab[0]
+		'[' expr_tab ']' 
+			{
+				$$.nb_dimension = 0;
+				int* d = malloc (sizeof (int));
+				d[0] = $2->value;
+				$$.nb_dimension ++;
+				$$.tab = d;
+			}
+		|TAB_DECL '[' expr_tab ']'
+			{
+				int*d  =  realloc($1.tab,$1.nb_dimension +1);
+				d[$1.nb_dimension] = $3->value;
+				$$.nb_dimension = $1.nb_dimension+1;
+				$$.tab = d;
+				// realloc + une case et écriture
+			}
+		;
+*/
+		
 TAB:		'[' expr_tab ']'
 			{
 				$$.nb_dimension = 0;
@@ -321,6 +375,7 @@ TAB:		'[' expr_tab ']'
 				// realloc + une case et écriture
 			}
 		;
+		
 		
 init:		'{' liste '}' ','
 			{
@@ -357,7 +412,8 @@ liste:		NUMERO
 			}
 		;
 
-expr_tab :	// exemple : int tab[]
+
+expr_tab :	// vide car on peut avoir par exemple : int tab[]
 			{
 				struct symbol* tmp = new_tmp (&tds);
 				tmp->value = 0;
@@ -374,14 +430,15 @@ expr_tab :	// exemple : int tab[]
 				s->isConstant = 0;
 				$$ = s;
 			}
-		|SIZE
+		|NUMERO
 			{
 				struct symbol* tmp = new_tmp (&tds);
 				tmp->value = $1;
 				$$ = tmp;
 			}
 		;
-		
+
+
 expr : 		ID
 			{
 				// génération d'un symbole qui sera le nom du temporaire avec comme valeur 0 (fait par défaut)
@@ -400,13 +457,48 @@ expr : 		ID
 				$$ = tmp;
 				
 			}
+		|ID TAB 
+			{
+				// renvoie le symbole correspondant à l'élement du tableau souhaité
+				
+				// on vérifie que le tableau existe bien
+				
+				struct symbol* id = symbol_lookup(tds,$1);
+				if (id == NULL)
+				{
+					yyerror("Le tableau n'est pas été définis correctement\n");
+					return -1;
+				}
+				
+				
+				// tab contient un tableau d'entiers : i,j,k où i = l'entier contenu entre les premiers crochets...
+				
+				int i,index=0;
+				for (i = 0;i< $2.nb_dimension; i++)
+				{
+					index += (id->dimension_size[i]-1) * $2.tab[i] ;
+				}
+				
+				
+				// on cherche ensuite l'élément situé à symbole ID + index
+				
+				struct symbol*	 it = id;
+				for (i=0; i< index+1; i++)
+				{
+					it = it -> next;
+				}
+/* 				printf("la valeur que l'on veut stocker est :%d\n",it->); */
+				$$ = it;
+				
+			}
 		;
+		
 		
 NUMERO:		SIZE
 			{
 				$$ = $1;
 			}
-		|ZERO// parce qu'on ne peut pas avoir tab[0]
+		|ZERO// parce qu'on ne peut pas avoir tab[0] pour une déclaration (autorisé en C mais pourrait mal se passer)
 			{
 				$$ = $1;
 			}

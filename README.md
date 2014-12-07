@@ -20,6 +20,7 @@ La sortie sera redirigée vers un fichier .s qui pourra être utiliser avec spim
 
 Les fichiers de test intérmédiaires sont disponibles dans le répertoire Tests/ , un fichier readme.txt explique les différentes étapes 
 
+Pour les tableaux on peut se simplifier la vie -> instructions pour gestion de tableaux -> http://people.cs.pitt.edu/~xujie/cs447/AccessingArray.htm
 
 
 

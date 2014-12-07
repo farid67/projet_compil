@@ -204,7 +204,7 @@ void tab_add (struct symbol** tds, struct symbol* tab)
 	}
 }
 
-void tab_complete (struct symbol** tds, struct symbol** tab, int* tab_int)
+void tab_complete  (struct symbol** tab, int* tab_int)
 {
 	// on n'initialisera uniquement le nombre d'éléments qui ont initalement étés déclarés dans le tableau
 	
@@ -229,7 +229,11 @@ struct symbol* new_tab (char* nom, int* dim, int nb_dim)
 	
 	struct symbol* tampon = alloc();
 	
-	tampon -> name = strdup(nom);
+	char* nom_secure = malloc( (strlen(nom)+1) * sizeof (char));
+	nom_secure = strdup(nom);
+	nom_secure[strlen(nom)] = '_';
+	
+	tampon -> name = strdup(nom_secure);
 	tampon -> isConstant = 2; // isConst à 2 signifie qu'on a un symbole tampon -> utile juste pour créer l'étiquette sous mips
 	
 	
@@ -254,9 +258,13 @@ struct symbol* new_tab (char* nom, int* dim, int nb_dim)
 	
 	int nb_symbole = 1,i;
 	
+	tampon -> dimension_size = malloc (nb_dim * sizeof(int));
+	
+	
 	
 	for (i = 0; i < nb_dim; i++)
 	{
+		tampon -> dimension_size[i] = dim[i];
 		nb_symbole *= dim[i];
 	}
 	
