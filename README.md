@@ -30,4 +30,4 @@ Les fichiers de test intérmédiaires sont disponibles dans le répertoire Tests
 
 -> A faire : 
 	reconnaitre les commentaires (cf tp2)
-	reconnaitre les expressions arithmétiques et générer les quads correspondants
+	reconnaitre les expressions arithmétiques/booléennes et générer les quads correspondants
