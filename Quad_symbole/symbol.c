@@ -204,6 +204,23 @@ void tab_add (struct symbol** tds, struct symbol* tab)
 	}
 }
 
+void tab_complete (struct symbol** tds, struct symbol** tab, int* tab_int)
+{
+	// on n'initialisera uniquement le nombre d'éléments qui ont initalement étés déclarés dans le tableau
+	
+	int nb_elem  = (*tab)->value,i;
+	
+	struct symbol* it = (*tab)->next;
+	
+	for (i=0; i< nb_elem && it!= NULL ; i++)
+	{
+		it -> value = tab_int[i];
+		it = it -> next;
+	}
+	
+	// vérifier si on a besoin de la table des symboles ou pas 
+}
+
 
 struct symbol* new_tab (char* nom, int* dim, int nb_dim)
 {

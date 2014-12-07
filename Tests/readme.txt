@@ -6,3 +6,9 @@
 -> test3 -> déclaration multiples de variables (avec initialisation éventuellement) et ev. sur la même ligne 
 
 -> test4 -> ajout de la gestion de la fonction printi() avec en argument un entier ou une variable
+
+-> test5 -> support déclaration de tableaux 
+
+-> test6 -> support déclaration de tableaux multidimensionnels
+
+-> test7 -> support déclaration de tableaux avec initialisation (support multidim également)

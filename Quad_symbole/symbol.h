@@ -42,6 +42,11 @@ void print_tds(struct symbol* tds);
 // ajout d'un tableau en queue de table
 void tab_add (struct symbol** tds, struct symbol* tab);
 
+// complete les éléments d'un tableau de la tds avec ce qui est contenu dans le tableau
+
+void tab_complete (struct symbol** tds, struct symbol** tab,int* tab_int);
+
+
 
 // nom -> nom du tableau ; dimension est un tableau qui contient uniquement le nombre d'éléments max par dimension
 // par exemple 		nom=tab , dim={2,3} -> 		tab[2,3]

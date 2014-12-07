@@ -22,6 +22,7 @@
 {
 	int value;
 	char* identificateur;
+	
 	struct
 	{
 		// struct symbol* result;
@@ -36,7 +37,7 @@
 	
 	struct
 	{
-		int* dim_size;
+		int* tab;
 		int nb_dimension;
 	}tab;
 	
@@ -47,7 +48,7 @@
 %token <identificateur> ID
 %type <code_gen> declaration instruction en_tete prg stenc liste_inst
 %type <expression> expr expr_tab
-%type <tab> TAB
+%type <tab> TAB init liste
 %token <keyword> INT CONST IF ELSE WHILE FOR STENCIL PRINTI MAIN RETURN
 
 
@@ -250,8 +251,42 @@ declaration :	ID '=' expr
 		|ID TAB
 			{
 				$$.code = NULL;
-				struct symbol* tab = new_tab($1,$2.dim_size,$2.nb_dimension);
+				struct symbol* tab = new_tab($1,$2.tab,$2.nb_dimension);
 				tab_add(&tds,tab);
+				int i;
+			}
+		|ID TAB '=' '{' liste '}' // cas tableaux unidim
+		// nécessite de vérifier que le nombre d'éléments définis dans la liste correspond bien à ce qui est contenu dans tab
+		// Faire le même test dans le cas du dessous -> par exemple int tab[3][2]
+			{
+				// initialisation du tableau avec les informations contenues dans tab -> création d'un étiquette est de n éléments après le .word
+				
+				$$.code = NULL;
+				struct symbol* tab = new_tab($1,$2.tab,$2.nb_dimension);
+				tab_add(&tds,tab);
+				
+				// récupération des données contenues dans la liste entre les accolades 
+				tab_complete (&tds,&tab,$5.tab);
+				
+			}
+		|ID TAB '=' '{' init '{' liste '}' '}' // cas tableaux multidimensionnel -> dimension > 2
+			{
+				$$.code = NULL;
+				struct symbol* tab = new_tab($1,$2.tab,$2.nb_dimension);
+				tab_add(&tds,tab);
+				
+				// concaténation de la dernière liste entre accolades avec les autres listes contenues dans init
+				
+				int * elem = realloc ($5.tab, $5.nb_dimension + $7.nb_dimension);
+				int i;
+				for (i=0; i < $7.nb_dimension; i++)
+				{
+					elem[$5.nb_dimension + i] = $7.tab[i];
+				}
+				
+				
+				// on complète les élements contenus dans le tableau avec ce qu'on a récupéré de la liste d'initialisation
+				tab_complete (&tds,&tab,elem);
 			}
 		|ID
 			{
@@ -275,15 +310,50 @@ TAB:		'[' expr_tab ']'
 				int* d = malloc (sizeof (int));
 				d[0] = $2->value;
 				$$.nb_dimension ++;
-				$$.dim_size = d;
+				$$.tab = d;
 			}
 		|TAB '[' expr_tab ']'
 			{
-				int*d  =  realloc($1.dim_size,$1.nb_dimension +1);
+				int*d  =  realloc($1.tab,$1.nb_dimension +1);
 				d[$1.nb_dimension] = $3->value;
 				$$.nb_dimension = $1.nb_dimension+1;
-				$$.dim_size = d;
+				$$.tab = d;
 				// realloc + une case et écriture
+			}
+		;
+		
+init:		'{' liste '}' ','
+			{
+				$$.tab=NULL;
+				$$.tab = $2.tab;
+				$$.nb_dimension = $2.nb_dimension;
+			}
+		| init '{' liste '}' ','
+		
+			{
+				$$.tab=NULL;
+				$$.tab = realloc ($1.tab, $1.nb_dimension + $3.nb_dimension);
+				int i;
+				for (i=0; i < $3.nb_dimension; i++)
+				{
+					$$.tab[$1.nb_dimension +i ] = $3.tab[i];
+				}
+				
+				$$.nb_dimension = $1.nb_dimension + $3.nb_dimension;
+			}
+		;
+
+liste:		NUMERO
+			{
+				$$.nb_dimension = 1;
+				$$.tab = malloc (sizeof (int));
+				$$.tab[0] = $1;
+			}
+		|liste ',' NUMERO
+			{
+				$$.nb_dimension = $1.nb_dimension +1;
+				$$.tab = realloc($1.tab,$1.nb_dimension +1);
+				$$.tab[$1.nb_dimension] = $3;
 			}
 		;
 
@@ -336,7 +406,7 @@ NUMERO:		SIZE
 			{
 				$$ = $1;
 			}
-		|ZERO
+		|ZERO// parce qu'on ne peut pas avoir tab[0]
 			{
 				$$ = $1;
 			}
