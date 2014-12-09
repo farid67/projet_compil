@@ -124,6 +124,7 @@ instruction:
 		declaration ';' //pour pouvoir écrire int i; puis i =5; par exemple
 			{
 				$$.code = NULL;
+				concat (&$$.code,$1.code);
 			}
 		|INT declaration ';'
 			{
@@ -246,7 +247,6 @@ declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 				}
 				s->isConstant = 0;
 				
-				
 				// affecter une valeur à une variable entière <=> li en mips
 				struct quad* q_assign = new_quad(label_quad,"=",$3,NULL,s);
 				label_quad++;
@@ -268,20 +268,27 @@ declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 					return -1;
 				}
 				
+				struct symbol* ptr = alloc(); // pour ne pas modifier les éléments de la table des symboles
+				ptr->name = strdup(id->name);
 				
 				// tab contient un tableau d'entiers : i,j,k où i = l'entier contenu entre les premiers crochets...
 				
-				int i,index=0;
+				int i,index=1;
 				for (i = 0;i< $2.nb_dimension; i++)
 				{
 					index += id->dimension_size[i] * $2.tab[i] ;
 				}
 				
 				// si on arrive ici c'est que l'étiquette a bien été définie auparavant et on a l'index
+				ptr ->isVar=2; // on stocke une valeur dans le tableau
+				ptr ->value = index;
 				
+				struct quad* q_assign = new_quad(label_quad,"=",$4,NULL,ptr);
+				label_quad++;
 				
+				quad_add (&$$.code, q_assign);
 			}
-		|ID TAB
+		|ID TAB // allocation
 			{
 				$$.code = NULL;
 				struct symbol* tab = new_tab($1,$2.tab,$2.nb_dimension);
@@ -471,25 +478,24 @@ expr : 		ID
 				}
 				
 				
+				struct symbol* ptr = alloc();
+				
 				// tab contient un tableau d'entiers : i,j,k où i = l'entier contenu entre les premiers crochets...
 				
-				int i,index=0;
+				int i,index=1;
 				for (i = 0;i< $2.nb_dimension; i++)
 				{
-					index += (id->dimension_size[i]-1) * $2.tab[i] ;
+					index += (id->dimension_size[i]) * $2.tab[i] ;
 				}
 				
 				
-				// on cherche ensuite l'élément situé à symbole ID + index
+				// on stocke l'index dans id->value
 				
-				struct symbol*	 it = id;
-				for (i=0; i< index+1; i++)
-				{
-					it = it -> next;
-				}
-/* 				printf("la valeur que l'on veut stocker est :%d\n",it->); */
-				$$ = it;
+				ptr -> isVar = 2;// c'est un élément de tableau
+				ptr -> name = strdup (id->name);
+				ptr -> value = index;
 				
+				$$ = ptr;
 			}
 		;
 		
@@ -519,7 +525,7 @@ int main()
 	}
 	
 /* 	print_tds(tds); // effectuer un traitement sur cette liste des symboles */
-/* 	quad_list_print(q_Globallist); */
+/* 	quad_list_print(q_Globallist); */	
 	
 	fprintf(stderr,"\n\nfin analyse\n");
 	fprintf(stderr,"\n---> Début traitement\n\n");

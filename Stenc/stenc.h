@@ -10,6 +10,8 @@ void traitementTds(struct symbol* tds);
 
 void traitementQList(struct quad_list* q_list);
 
+void traitementTab(struct symbol* s);
+
 
 
 #endif // _STENC_H_

@@ -36,8 +36,7 @@ struct symbol* new_tmp (struct symbol** tds)
 		}
 		tmp -> next = n;
 	}
-
-
+	n->isVar = 0; // il s'agit d'une constante entière stockée dans un tmp
 	return n;
 }
 

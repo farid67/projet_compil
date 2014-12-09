@@ -43,6 +43,10 @@ void print_s (struct symbol* s);
 void print_tds(struct symbol* tds);
 
 
+// Les 3 prototypes de fonction suivants partent du principe qu'un tableau de taille N (peu importe la dimension) est alloué par le biais d'une allocation 
+// d'un symbole tampon qui contiendra l'étiquette du tableau ainsi que le nombre d'éléments qu'il contiendra
+
+
 // ajout d'un tableau en queue de table des symboles
 void tab_add (struct symbol** tds, struct symbol* tab);
 
@@ -54,11 +58,14 @@ void tab_complete (struct symbol** tab,int* tab_int);
 // nom -> nom du tableau ; dimension est un tableau qui contient uniquement le nombre d'éléments max par dimension
 // par exemple 		nom=tab , dim={2,3} -> 		tab[2,3]
 // création du premier élément tab[0,0] -> puis chainage -> tab[0,1]... tab[0,2]
-// pour le nom des éléments, on donnera tab_0_0 pour le premier etc tab_1_2 p
 
 
 // valeur renvoyée -> pointeur sur le premier élément donc tab_0_0 dans notre cas
 struct symbol* new_tab(char* nom, int* dim, int nb_dim);
+
+// Pour simplifier on utilisera la notation mips simple donc l'étiquette et une liste d'entier 
+// par exemple int tab[3] = {1,2,3} deviendra 
+// tab : .word 1, 2, 3
 
 
 #endif

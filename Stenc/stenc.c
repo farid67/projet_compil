@@ -5,11 +5,11 @@ void traitementTds( struct symbol* tds)
 {
 	if (tds != NULL)
 	{
-		printf("\t.data\n");
+		printf("\n\t.data\n");
 		struct symbol* tmp = tds;
 		do
 		{
-			if (tmp->isConstant==1 || tmp->isVar)
+			if (tmp->isConstant==1 || tmp->isVar==1)
 			{
 				printf("%s:\t.word %d\n",tmp->name,tmp->value);
 			}
@@ -35,6 +35,15 @@ void traitementTds( struct symbol* tds)
 }
 
 
+void traitementTab(struct symbol* s)
+{
+	printf("\tla $t2 %s\n",s->name);
+	printf("\tli $t1 %d\n",s->value); // index
+	printf("\tmul $t1 $t1 4\n"); 
+	printf("\tadd $t1 $t2 $t1\n");
+}
+
+
 void traitementQList( struct quad_list* q_list)
 {
 	// pour le moment on traite les différents quad dont l'opérateur est un li et dont le résultat et un symbole avec un numéro différents de 0
@@ -52,7 +61,7 @@ void traitementQList( struct quad_list* q_list)
 			tmp = tmp_list -> node;
 			do 
 			{
-				if (strcmp(tmp->op,"li") == 0 && tmp->res->value != 0) 
+				if (strcmp(tmp->op,"li") == 0 && tmp->res->value != 0)  // appel système 
 				{
 					printf("\tli ");
 					switch (tmp->res->value)
@@ -71,10 +80,45 @@ void traitementQList( struct quad_list* q_list)
 				{
 					// affectation d'une expression vers un ID
 					
-					// d'abord un load int de la valeur souhaitée
-					printf("\tli $v0 %d\n",tmp->arg1->value);
-					// stockage de la valeur souhaitée dans la zone mémoire correspondante
-					printf("\tsw $v0 %s\n",tmp->res->name);
+					// gestion de l'expression
+					
+					switch (tmp->arg1->isVar)
+					{
+						case 0: // tmp -> donc un entier quelconque
+							// d'abord un load int de la valeur souhaitée
+							printf("\tli $t0 %d\n",tmp->arg1->value);
+							break;
+						case 1:
+							printf("\tmove $t0 %s\n",tmp->arg1->name);
+							break;
+						case 2:
+							// récupération de l'adresse du tableau avec l'étiquette
+							traitementTab(tmp->arg1);
+							printf("\tlw $t0 0($t1)\n");
+							break;
+					}
+					
+					
+					
+					
+					// gestion du resultat 
+					
+					switch (tmp->res->isVar)
+					{
+						// si le res est un ID 
+						case 1:
+							// stockage de la valeur souhaitée dans la zone mémoire correspondante
+							printf("\tsw $t0 %s\n",tmp->res->name);
+							break;
+						
+						// si le res est l'étiquette vers un tableau 
+						case 2:
+							// l'index du tableau est contenu dans res->value
+							traitementTab(tmp->res);
+							printf("\tsw $t0 0($t1)\n");
+							break;
+					}
+						
 				}
 				
 				else if (strcmp(tmp->op,"lw") ==0 ) // l'argument est forcément une variable
@@ -92,6 +136,8 @@ void traitementQList( struct quad_list* q_list)
 					printf("%s\n",tmp->arg1->name);
 				}
 				
+				
+				// instruction syscall en mips
 				else if (strcmp(tmp->op,"syscall") == 0)
 				{
 					printf("\t%s\n",tmp->op);
