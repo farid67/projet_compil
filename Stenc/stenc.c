@@ -82,22 +82,25 @@ void traitementQList( struct quad_list* q_list)
 					
 					// gestion de l'expression
 					
-					switch (tmp->arg1->isVar)
-					{
-						case 0: // tmp -> donc un entier quelconque
-							// d'abord un load int de la valeur souhaitée
-							printf("\tli $t0 %d\n",tmp->arg1->value);
-							break;
-						case 1:
-							printf("\tmove $t0 %s\n",tmp->arg1->name);
-							break;
-						case 2:
-							// récupération de l'adresse du tableau avec l'étiquette
-							traitementTab(tmp->arg1);
-							printf("\tlw $t0 0($t1)\n");
-							break;
-					}
 					
+					
+					if (tmp->arg1->isConstant != 3)// si l'argument est le résultat d'une sous expression, son évaluation a déjà été traité auparavant
+					{
+						switch (tmp->arg1->isVar)
+						{
+							case 0: // tmp -> donc un entier quelconque
+								printf("\tli $t0 %d\n",tmp->arg1->value);
+								break;
+							case 1:
+								printf("\tmove $t0 %s\n",tmp->arg1->name);
+								break;
+							case 2:
+								// récupération de l'adresse du tableau avec l'étiquette
+								traitementTab(tmp->arg1);
+								printf("\tlw $t0 0($t1)\n");
+								break;
+						}
+					}
 					
 					
 					
@@ -137,6 +140,61 @@ void traitementQList( struct quad_list* q_list)
 				}
 				
 				
+				else if (strcmp(tmp->op,"add") ==0  || strcmp(tmp->op,"mul") ==0  || (strcmp(tmp->op,"div") ==0 ) || (strcmp(tmp->op,"sub") ==0 ))
+				{
+					// dépend de l'arg1
+					switch (tmp->arg1->isVar)
+					{
+						case 0:
+							// variable tmp
+							printf("\tli $t1 %d\n",tmp->arg1->value);
+							break;
+						case 1:
+							// variables définies (i,j..)
+							printf("\tlw $t1 %s\n",tmp->arg1->name);
+							break;
+						case 2:
+							// élément de tableau
+							break;
+					}
+					
+					
+					// du second argument
+					switch(tmp->arg2->isVar)
+					{
+						case 0:
+							printf("\tli $t2 %d\n",tmp->arg2->value);
+							break;
+					}
+					
+					// effectuer l'opération
+					
+					printf("\t%s $t0 $t1 $t2\n",tmp->op);
+
+					// de l'endroit où on veut stocker le résultat 
+					
+					
+					switch (tmp->res->isVar)
+					{
+						// si on souhaite faire plusieurs opérations imbriquées on doit garder les résultats temporaires
+						case 0:
+							// on ne fait rien car le résultat est déjà dans $t0
+							break;
+						// si le res est un ID 
+						case 1:
+							// stockage de la valeur souhaitée dans la zone mémoire correspondante
+							printf("\tsw $t0 %s\n",tmp->res->name);
+							break;
+						
+						// si le res est l'étiquette vers un tableau 
+						case 2:
+							// l'index du tableau est contenu dans res->value
+							traitementTab(tmp->res);
+							printf("\tsw $t0 0($t1)\n");
+							break;
+					}
+				}
+				
 				// instruction syscall en mips
 				else if (strcmp(tmp->op,"syscall") == 0)
 				{
@@ -144,6 +202,8 @@ void traitementQList( struct quad_list* q_list)
 				}
 				tmp = tmp->next;
 			}while (tmp!= NULL);
+			
+			// cas où on aurait plusieurs listes chaînée -> voir si on en aura besoin
 			tmp_list = tmp_list->next;
 		}while (tmp_list!= NULL);
 	}

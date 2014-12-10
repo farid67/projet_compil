@@ -9,8 +9,9 @@
 %}
 
 space_newLine	[ \t\n]*
-nonAlphaNum	["+""\-""/""{""}"","";""=""$""\[""\]""\(""\)""&"">""<""!""|"]
+nonAlphaNum	["+""\-""/""{""}"","";""=""$""\[""\]""\(""\)""&"">""<""!""|""\""]
 commentaire	"/*"([^"*"]*["*"]+[^/*])*[^*]*[*]+"/"
+ascii		[\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/0-9\:\;\<\=\>\?\@\[\\\]\^_\`\{\|\}\~]*
 /* comm_ligne	"//".\n */
 
 
@@ -20,6 +21,8 @@ commentaire	"/*"([^"*"]*["*"]+[^/*])*[^*]*[*]+"/"
 
 {space_newLine} 	{if (strcmp(yytext,"\n") == 0) {compteur_ligne++;}}
 {commentaire}		{}
+"++"			{return INCR;}
+"--"			{return DECR;}
 {nonAlphaNum}		{return yytext[0];}
 int			{return INT ;}
 stencil			{return STENCIL;}
@@ -29,6 +32,7 @@ while			{return WHILE;}
 for			{return FOR;}
 const			{return CONST;}
 printi			{return PRINTI;}
+printf			{return PRINTF;}
 main			{return MAIN;}
 return			{return RETURN;}
 [1-9]+[0-9]*		{// éviter qu'on écrive tab[0] pour la déclaration
@@ -45,10 +49,12 @@ return			{return RETURN;}
 /* 				printf("identificateur reconnu\n"); */
 				return ID;
 			}
+
 <<EOF>>			{ yyterminate();}
 .			{
 				printf("Caractère non reconnu par Lex %s, ligne %d\n",yytext,compteur_ligne);
-			}
+			}	
+
 
 %%
 

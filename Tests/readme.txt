@@ -12,3 +12,8 @@
 -> test6 -> support déclaration de tableaux multidimensionnels
 
 -> test7 -> support déclaration de tableaux avec initialisation (support multidim également)
+
+-> test8 -> support manipulation de tableaux avec expressions 
+
+-> test9 -> support expression arithmétiques (pour le moment expression simples)
+

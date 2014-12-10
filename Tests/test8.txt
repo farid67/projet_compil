@@ -3,9 +3,9 @@ const int width = 128;
 
 int main()
 {
-	int i=2;
-	i = i+3;
-	
+	int tab[3][2];
+	tab[0][1] = 12;
+	int i = tab[3][0];
 	printi(i);
 	return 0;
 }

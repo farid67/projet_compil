@@ -25,7 +25,7 @@
 	
 	struct
 	{
-		// struct symbol* result;
+		struct symbol* result; // -> pour les expressions arithmétiques
 		struct quad_list* code;
 		struct quad_list* true_list;
 		struct quad_list* false_list;
@@ -39,7 +39,11 @@
 	{
 		int* tab;
 		int nb_dimension;
+		struct quad_list* code ; // dans le cas où on aurait tab[i*3] -> on doit d'abord évaluer i*3
 	}tab;
+	
+	char* chaine;
+	char* op_part;
 	
 }
 
@@ -47,9 +51,18 @@
 %type <value> NUMERO
 %token <identificateur> ID
 %type <code_gen> declaration instruction en_tete prg stenc liste_inst
-%type <expression> expr expr_tab
+%type <code_gen> expr expr_part	
 %type <tab> TAB init liste
-%token <keyword> INT CONST IF ELSE WHILE FOR STENCIL PRINTI MAIN RETURN
+%token <chaine> CHAINE
+%token <op_part> INCR DECR
+%token <keyword> INT CONST IF ELSE WHILE FOR STENCIL PRINTI PRINTF MAIN RETURN 
+
+
+%right '='
+%left '+' '-'
+%left '*' '/'
+%left Unary INCR DECR
+
 
 
 %%
@@ -126,6 +139,11 @@ instruction:
 				$$.code = NULL;
 				concat (&$$.code,$1.code);
 			}
+		| expr_part ';'
+			{
+				$$.code = NULL;
+				concat (&$$.code, $1.code);
+			}
 		|INT declaration ';'
 			{
 				$$.code = NULL;
@@ -139,6 +157,12 @@ instruction:
 				concat (&$$.code,$2.code);
 				concat (&$$.code,$4.code);
 			}
+/*	Pour le moment problème avec les chaines de caractères (gestion des " étrange, provoquent des erreurs semblerait-il)
+		| PRINTF '(' chaineAscii ')' ';'
+			{
+				$$.code=NULL;
+			}
+		*/
 		| PRINTI '(' expr ')' ';'
 			{
 				$$.code = NULL;
@@ -160,7 +184,7 @@ instruction:
 				// dépend de expr
 				char* op;
 				
-				if ($3->isVar)
+				if ($3.result->isVar)
 				{
 					op = "lw";
 				}
@@ -169,7 +193,7 @@ instruction:
 					op = "li";
 				}
 				
-				struct quad* q_li_a0 = new_quad(label_quad,op,$3,NULL,tmp);
+				struct quad* q_li_a0 = new_quad(label_quad,op,$3.result,NULL,tmp);
 				label_quad ++;
 				
 				
@@ -185,6 +209,9 @@ instruction:
 				struct quad* sys = new_quad(label_quad,"syscall",NULL,NULL,NULL);
 				label_quad++;
 				
+				// on ajoute éventuellement le code porté par l'expression
+				
+				concat (&$$.code, $3.code);
 				
 				// on stocke les quads crées 
 				quad_add(&$$.code,q_li_a0);
@@ -209,7 +236,7 @@ instruction:
 				
 				struct symbol* tmp = new_tmp(&tds);
 				tmp->value = 4;  // Le registre numéro 4 correspond à $a0
-				struct quad* q_returnCode = new_quad(label_quad,"li",$2,NULL,tmp);
+				struct quad* q_returnCode = new_quad(label_quad,"li",$2.result,NULL,tmp);
 				label_quad++;
 				
 				// second quad -> affectation de 17 à $v0
@@ -224,6 +251,8 @@ instruction:
 				
 				struct quad* sys = new_quad(label_quad,"syscall",NULL,NULL,NULL);
 				label_quad++;
+				
+				concat (&$$.code,$2.code);
 				
 				
 				quad_add(&$$.code,q_returnCode);
@@ -248,9 +277,10 @@ declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 				s->isConstant = 0;
 				
 				// affecter une valeur à une variable entière <=> li en mips
-				struct quad* q_assign = new_quad(label_quad,"=",$3,NULL,s);
+				struct quad* q_assign = new_quad(label_quad,"=",$3.result,NULL,s);
 				label_quad++;
 				
+				concat (&$$.code,$3.code);
 				quad_add (&$$.code, q_assign);
 			}
 		|ID TAB '=' expr // tab[2][3] = i; ou bien tab[2] = 0; 
@@ -276,16 +306,24 @@ declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 				int i,index=1;
 				for (i = 0;i< $2.nb_dimension; i++)
 				{
+					if (id->dimension_size[i] < $2.tab[i])
+					{
+						yyerror("overflow in tab\n");
+						return -1;
+					}
 					index += id->dimension_size[i] * $2.tab[i] ;
 				}
+				
 				
 				// si on arrive ici c'est que l'étiquette a bien été définie auparavant et on a l'index
 				ptr ->isVar=2; // on stocke une valeur dans le tableau
 				ptr ->value = index;
 				
-				struct quad* q_assign = new_quad(label_quad,"=",$4,NULL,ptr);
+				struct quad* q_assign = new_quad(label_quad,"=",$4.result,NULL,ptr);
 				label_quad++;
 				
+				concat (&$$.code,$2.code);
+				concat (&$$.code,$4.code);
 				quad_add (&$$.code, q_assign);
 			}
 		|ID TAB // allocation
@@ -293,6 +331,7 @@ declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 				$$.code = NULL;
 				struct symbol* tab = new_tab($1,$2.tab,$2.nb_dimension);
 				tab_add(&tds,tab);
+				concat(&$$.code,$2.code);
 			}
 		|ID TAB '=' '{' liste '}' // cas tableaux unidim
 		// nécessite de vérifier que le nombre d'éléments définis dans la liste correspond bien à ce qui est contenu dans tab
@@ -306,7 +345,7 @@ declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 				
 				// récupération des données contenues dans la liste entre les accolades 
 				tab_complete (&tab,$5.tab);
-				
+				concat (&$$.code,$2.code);
 			}
 		|ID TAB '=' '{' init '{' liste '}' '}' // cas tableaux multidimensionnel -> dimension > 2
 			{
@@ -326,6 +365,8 @@ declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 				
 				// on complète les élements contenus dans le tableau avec ce qu'on a récupéré de la liste d'initialisation
 				tab_complete (&tab,elem);
+				
+				concat (&$$.code,$2.code);
 			}
 		|ID
 			{
@@ -342,7 +383,14 @@ declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 			}
 		
 		;
-
+/*
+chaineAscii :   CHAINE 
+			{
+				printf("%s",$1);
+				$$ = strdup ($1);
+			}
+		;
+*/
 		
 /*
 TAB_DECL:	// on différence 2 cas pour les tableaux car on ne peut pas définir un tableau avec 0 élements par contre on peut vouloir accéder à tab[0]
@@ -365,21 +413,27 @@ TAB_DECL:	// on différence 2 cas pour les tableaux car on ne peut pas définir 
 		;
 */
 		
-TAB:		'[' expr_tab ']'
+TAB:		'[' expr ']'
 			{
+				$$.code = NULL;
 				$$.nb_dimension = 0;
 				int* d = malloc (sizeof (int));
-				d[0] = $2->value;
+				d[0] = $2.result->value;
 				$$.nb_dimension ++;
 				$$.tab = d;
+				concat (&$$.code,$2.code);
 			}
-		|TAB '[' expr_tab ']'
+		|TAB '[' expr ']'
 			{
+				$$.code = NULL;
+				// realloc + une case et écriture
 				int*d  =  realloc($1.tab,$1.nb_dimension +1);
-				d[$1.nb_dimension] = $3->value;
+				d[$1.nb_dimension] = $3.result->value;
 				$$.nb_dimension = $1.nb_dimension+1;
 				$$.tab = d;
-				// realloc + une case et écriture
+				concat (&$$.code,$1.code);
+				concat (&$$.code,$3.code);
+				
 			}
 		;
 		
@@ -419,12 +473,15 @@ liste:		NUMERO
 			}
 		;
 
-
-expr_tab :	// vide car on peut avoir par exemple : int tab[]
+// pour le moment on simplifiera en admettant qu'on ne puisse pas définir un tableau vide 
+//  Il sera donc impossible d'écrire int tab[] ;
+		
+/*
+expr_tab :	// vide car on peut avoir par exemple : int tab[] ->et ne peut pas être le cas pour les expressions simples (on ne peut pas écrire " i * " )
 			{
 				struct symbol* tmp = new_tmp (&tds);
 				tmp->value = 0;
-				$$ = tmp;
+				$$.result = tmp;
 			}
 		|ID
 			{
@@ -435,16 +492,16 @@ expr_tab :	// vide car on peut avoir par exemple : int tab[]
 					s = symbol_add(&tds,$1);	
 				}
 				s->isConstant = 0;
-				$$ = s;
+				$$.result = s;
 			}
 		|NUMERO
 			{
 				struct symbol* tmp = new_tmp (&tds);
 				tmp->value = $1;
-				$$ = tmp;
+				$$.result = tmp;
 			}
 		;
-
+*/
 
 expr : 		ID
 			{
@@ -455,17 +512,19 @@ expr : 		ID
 					s = symbol_add(&tds,$1);	
 				}
 				s->isConstant = 0;
-				$$ = s;
+				$$.result = s;
 			}
 		|NUMERO
 			{
 				struct symbol* tmp = new_tmp (&tds);
 				tmp->value = $1;
-				$$ = tmp;
+				$$.result = tmp;
 				
 			}
 		|ID TAB 
 			{
+				
+				
 				// renvoie le symbole correspondant à l'élement du tableau souhaité
 				
 				// on vérifie que le tableau existe bien
@@ -485,7 +544,13 @@ expr : 		ID
 				int i,index=1;
 				for (i = 0;i< $2.nb_dimension; i++)
 				{
+					if (id->dimension_size[i] < $2.tab[i])
+					{
+						yyerror("overflow in tab");
+						return -1;
+					}
 					index += (id->dimension_size[i]) * $2.tab[i] ;
+					
 				}
 				
 				
@@ -495,7 +560,114 @@ expr : 		ID
 				ptr -> name = strdup (id->name);
 				ptr -> value = index;
 				
-				$$ = ptr;
+				concat (&$$.code, $2.code);
+				$$.result = ptr;
+			}
+		|expr '+' expr
+			{
+				// création d'un symbole temporaire qui contiendra le résulat de l'addition
+				struct symbol* tmp = new_tmp(&tds);
+				tmp->isConstant = 3; // résulat temporaire d'une sous-expression
+				
+				struct quad* quad_a = new_quad(label_quad,"add",$1.result,$3.result,tmp);
+				label_quad++;
+				
+				// concaténation si les expressions elles-même portent du code
+				concat (&$$.code,$1.code);
+				concat (&$$.code,$3.code);
+				
+				// on ajoute le quad correspondant à l'addition
+				quad_add (&$$.code, quad_a);
+				$$.result = tmp;
+			}
+		| expr '*' expr
+			{
+				// création d'un symbole temporaire qui contiendra le résulat de l'addition
+				struct symbol* tmp = new_tmp(&tds);
+				tmp->isConstant = 3; // résulat temporaire d'une sous-expression
+				
+				struct quad* quad_m = new_quad(label_quad,"mult",$1.result,$3.result,tmp);
+				label_quad++;
+				
+				// concaténation si les expressions elles-même portent du code
+				concat (&$$.code,$1.code);
+				concat (&$$.code,$3.code);
+				
+				// on ajoute le quad correspondant à l'addition
+				quad_add (&$$.code, quad_m);
+				$$.result = tmp;
+			}
+		| expr '/' expr
+			{
+				// création d'un symbole temporaire qui contiendra le résulat de l'addition
+				struct symbol* tmp = new_tmp(&tds);
+				tmp->isConstant = 3; // résulat temporaire d'une sous-expression
+				
+				struct quad* quad_d = new_quad(label_quad,"div",$1.result,$3.result,tmp);
+				label_quad++;
+				
+				// concaténation si les expressions elles-même portent du code
+				concat (&$$.code,$1.code);
+				concat (&$$.code,$3.code);
+				
+				// on ajoute le quad correspondant à l'addition
+				quad_add (&$$.code, quad_d);
+				$$.result = tmp;
+			}
+		| expr '-' expr
+			{
+				// création d'un symbole temporaire qui contiendra le résulat de l'addition
+				struct symbol* tmp = new_tmp(&tds);
+				tmp->isConstant = 3; // résulat temporaire d'une sous-expression
+				
+				struct quad* quad_s = new_quad(label_quad,"sub",$1.result,$3.result,tmp);
+				label_quad++;
+				
+				// concaténation si les expressions elles-même portent du code
+				concat (&$$.code,$1.code);
+				concat (&$$.code,$3.code);
+				
+				// on ajoute le quad correspondant à l'addition
+				quad_add (&$$.code, quad_s);
+				$$.result = tmp;
+			}
+		| '-' expr %prec Unary
+			{
+				// création d'un symbole temporaire qui contiendra le résulat de l'addition
+				struct symbol* tmp = new_tmp(&tds);
+				tmp->isConstant = 3; // résulat temporaire d'une sous-expression
+				
+				struct quad* quad_n = new_quad(label_quad,"neg",$2.result,NULL,tmp);
+				label_quad++;
+				
+				concat (&$$.code,$2.code);
+				
+				// on ajoute le quad correspondant à l'addition
+				quad_add (&$$.code, quad_n);
+				$$.result = tmp;
+			}
+		|expr_part // i++ , ...
+			{
+				$$.code = NULL;
+			}
+		;
+			
+expr_part :
+		 expr INCR
+			{
+				$$.code = NULL;
+			}
+		| INCR expr
+			{
+				$$.code = NULL;
+			}
+		| expr DECR 
+			{
+				$$.code = NULL;
+			}
+		| DECR expr 
+			{
+				$$.code = NULL;
 			}
 		;
 		
@@ -522,10 +694,13 @@ int main()
 	if (yyparse())
 	{
 		fprintf(stdout,"erreur\n");
+		return -1;
 	}
 	
+	
+	
 /* 	print_tds(tds); // effectuer un traitement sur cette liste des symboles */
-/* 	quad_list_print(q_Globallist); */	
+/* 	quad_list_print(q_Globallist);	 */
 	
 	fprintf(stderr,"\n\nfin analyse\n");
 	fprintf(stderr,"\n---> Début traitement\n\n");
