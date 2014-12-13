@@ -67,4 +67,8 @@ void complete (struct quad_list** liste, int label_goto);
 void concat (struct quad_list** l1, struct quad_list* l2);
 
 
+// concaténation de liste avec priorité
+void concat_ope (struct quad_list** l1, struct quad_list* op1, struct quad_list* op2);
+
+
 #endif // QUAD_H

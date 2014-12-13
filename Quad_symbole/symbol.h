@@ -11,8 +11,9 @@ struct symbol
 	int isConstant; // 1-> constante (true,false..) 2-> tampon pour tableaux 3 -> résultat intérmédiaire pour les expressions
 	int value;
 	int isVar ; // permet de différencier les variables de type i,j.. et autres identificateurs des variables utilisées pour les goto
-	// si isVar = 2 alors le symbol est un élément de tableau 
-	// si isVar = 3 le symbol est une étiquette pour une chaine de caractère
+	// si isVar = 2 alors le symbole est un élément de tableau 
+	// si isVar = 3 alors le symbole est un élément de tableau mais l'index n'est pas connu tab[i] par exemple
+	// si isVar = 4 le symbol est une étiquette pour une chaine de caractère // ATTENTION pas encore gérer
 	
 	int* dimension_size; // existe seulement pour les tampons , et le chaine de caractère
 	

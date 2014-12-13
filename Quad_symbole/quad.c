@@ -135,6 +135,69 @@ void complete(struct quad_list** liste , int label_goto)
 	
 }
 
+void concat_ope (struct quad_list** l1, struct quad_list* op1, struct quad_list* op2)
+{
+	if (op2==NULL)
+	{
+		concat (l1,op1);
+	}
+	if (op1 == NULL)
+	{
+		concat (l1,op2);
+	}
+	
+	// liste non vide -> recherche priorité 
+	
+	
+	int prio1 = 1;
+	
+	struct quad* tmp;
+	
+	tmp = op2->node;
+	while (tmp != NULL)
+	{
+		if (strcmp(tmp->op,"mul") == 0 || strcmp(tmp->op,"div") == 0)
+		{
+			prio1 = 0; // la liste 1 n'est plus forcément prioritaire
+			break;
+		}
+		tmp = tmp->next;
+	}
+	
+	if (prio1 == 1) //liste 1 prio
+	{
+		concat (l1, op1);
+		concat (l1, op2);
+		return ;
+	}
+	
+	tmp = op1-> node;
+	
+	while (tmp != NULL)
+	{
+		if (strcmp(tmp->op,"mul") == 0 || strcmp(tmp->op,"div") == 0)
+		{
+			prio1 = 1; // la liste 1 devient prioritaire
+		}
+		tmp = tmp->next;
+	}
+	
+	if (prio1 == 1) // l1 prio
+	{
+		concat (l1, op1);
+		concat (l1, op2);
+		return ;
+	}
+	
+	else
+	{
+		concat (l1, op2);
+		concat (l1, op1);
+		return ;
+	}
+	
+	
+}
 
 
 void concat(struct quad_list** l1, struct quad_list* l2)

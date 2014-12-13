@@ -66,10 +66,21 @@
 %left '[' ']'
 
 
-
 %%
 
-stenc:		en_tete prg
+
+
+stenc:		INT declaration ';' ID TAB '=' expr ';'
+			{
+				printf("ici\n");
+				$$.code = NULL;
+				concat(&$$.code,$2.code);
+				concat(&$$.code,$5.code);
+				concat(&$$.code,$7.code);
+				print_tds(tds);
+				quad_list_print($$.code);
+			}
+		|en_tete prg
 			{
 				$$.code = NULL;
 				
@@ -607,130 +618,35 @@ expr : 		ID
 				if ($2.indexDefined == 1)
 					ptr -> isVar = 2;// c'est un élément de tableau
 				else
-					ptr-> isVar = 3;// on ne connait pas l'index à l'avance -> par exemple tab[i] demande d'abord une évaluation de i 
+					ptr-> isVar = 3;
 				ptr -> name = strdup (id->name);
 				ptr -> value = index;
 				
 				concat (&$$.code, $2.code);
-				
-/* 				printf("expression temporaire détéctée -> id : %s\n",$1); */
-/* 				quad_list_print($$.code); */
-				
-				
 				$$.result = ptr;
-			}
-		| '(' expr ')' 
-			{
-				$$.code = NULL;
-				concat (&$$.code, $2.code);
-				$$.result = $2.result;
 			}
 		| expr '+' expr
 			{
-				$$.code = NULL;
 				// création d'un symbole temporaire qui contiendra le résulat de l'addition
 				struct symbol* tmp = new_tmp(&tds);
 				tmp->isConstant = 3; // résulat temporaire d'une sous-expression
-				
-				
-				
-				// ATTENTION -> pour gérer le chainage des quads, et les priorités, on ajoutera les quads en fin de chaine ici (après $3.code)
-				
-				
-				
-				// concaténation si les expressions elles-même portent du code
-				concat_ope (&$$.code,$1.code, $3.code);
-				
-				
-				if ($1.result->isConstant != 3) // si expr1 est déjà le résultat d'une sous expression! dans ce cas le résultat précédent est dans $t6
-				{	
-					struct symbol * n_t5 = alloc (); // stocker la première opérande
-					n_t5 -> value = 13;
-					
-					struct quad* quad_a1 = NULL;
-				
-					
-					if ($1.result->isVar == 0)
-						quad_a1 =  new_quad(label_quad,"li",$1.result,NULL,n_t5);
-					else
-						quad_a1 =  new_quad(label_quad,"lw",$1.result,NULL,n_t5);
-					label_quad ++ ;
-					
-					quad_add (&$$.code,quad_a1);
-				}
-				
-				
-				if ($3.result->isConstant != 3)
-				{	
-					struct symbol * n_t3 = alloc (); // stocker la seconde opérande
-					n_t3 -> value = 11;
-					
-					struct quad* quad_a3 = NULL;
-					
-					
-					if ($3.result->isVar == 0)
-						quad_a3 =  new_quad(label_quad,"li",$3.result,NULL,n_t3);
-					else
-						quad_a3 =  new_quad(label_quad,"lw",$3.result,NULL,n_t3);
-					label_quad ++;
-					quad_add (&$$.code,quad_a3);
-				}
-				
 				
 				struct quad* quad_a = new_quad(label_quad,"add",$1.result,$3.result,tmp);
 				label_quad++;
 				
+				// concaténation si les expressions elles-même portent du code
+				concat (&$$.code,$1.code);
+				concat (&$$.code,$3.code);
 				
 				// on ajoute le quad correspondant à l'addition
 				quad_add (&$$.code, quad_a);
-				
 				$$.result = tmp;
 			}
 		| expr '*' expr
 			{
-/* 				printf("mult d'abord\n"); */
-				$$.code = NULL;
 				// création d'un symbole temporaire qui contiendra le résulat de l'addition
 				struct symbol* tmp = new_tmp(&tds);
 				tmp->isConstant = 3; // résulat temporaire d'une sous-expression
-				
-				
-				if ($1.result->isConstant != 3) // si expr1 est déjà le résultat d'une sous expression! dans ce cas le résultat précédent est dans $t6
-				{	
-					struct symbol * n_t5 = alloc (); // stocker la première opérande
-					n_t5 -> value = 13;
-					
-					struct quad* quad_a1 = NULL;
-					
-					
-/* 					printf("1er quad de $1 -> %d\n",$1.code->node->label); */
-					
-					if ($1.result->isVar == 0)
-						quad_a1 =  new_quad(next_quad($1.code),"li",$1.result,NULL,n_t5);
-					else
-						quad_a1 =  new_quad(next_quad($1.code),"lw",$1.result,NULL,n_t5);
-					label_quad ++ ;
-				
-					quad_add (&$1.code,quad_a1);
-				}
-				
-				
-				if ($3.result->isConstant != 3)
-				{	
-					struct symbol * n_t3 = alloc (); // stocker la seconde opérande
-					n_t3 -> value = 11;
-					
-					struct quad* quad_a3 = NULL;
-					
-					
-					if ($3.result->isVar == 0)
-						quad_a3 =  new_quad(next_quad($3.code),"li",$3.result,NULL,n_t3);
-					else
-						quad_a3 =  new_quad(next_quad($3.code),"lw",$3.result,NULL,n_t3);
-					label_quad ++;
-					quad_add (&$3.code,quad_a3);
-				}
-				
 				
 				struct quad* quad_m = new_quad(label_quad,"mul",$1.result,$3.result,tmp);
 				label_quad++;
@@ -745,48 +661,9 @@ expr : 		ID
 			}
 		| expr '/' expr
 			{
-				$$.code = NULL;
 				// création d'un symbole temporaire qui contiendra le résulat de l'addition
 				struct symbol* tmp = new_tmp(&tds);
 				tmp->isConstant = 3; // résulat temporaire d'une sous-expression
-				
-				
-				if ($1.result->isConstant != 3) // si expr1 est déjà le résultat d'une sous expression! dans ce cas le résultat précédent est dans $t6
-				{	
-					struct symbol * n_t5 = alloc (); // stocker la première opérande
-					n_t5 -> value = 13;
-					
-					struct quad* quad_a1 = NULL;
-					
-					
-/* 					printf("1er quad de $1 -> %d\n",$1.code->node->label); */
-					
-					if ($1.result->isVar == 0)
-						quad_a1 =  new_quad(next_quad($1.code),"li",$1.result,NULL,n_t5);
-					else
-						quad_a1 =  new_quad(next_quad($1.code),"lw",$1.result,NULL,n_t5);
-					label_quad ++ ;
-				
-					quad_add (&$1.code,quad_a1);
-				}
-				
-				
-				if ($3.result->isConstant != 3)
-				{	
-					struct symbol * n_t3 = alloc (); // stocker la seconde opérande
-					n_t3 -> value = 11;
-					
-					struct quad* quad_a3 = NULL;
-					
-					
-					if ($3.result->isVar == 0)
-						quad_a3 =  new_quad(next_quad($3.code),"li",$3.result,NULL,n_t3);
-					else
-						quad_a3 =  new_quad(next_quad($3.code),"lw",$3.result,NULL,n_t3);
-					label_quad ++;
-					quad_add (&$3.code,quad_a3);
-				}
-				
 				
 				struct quad* quad_d = new_quad(label_quad,"div",$1.result,$3.result,tmp);
 				label_quad++;
@@ -801,47 +678,16 @@ expr : 		ID
 			}
 		| expr '-' expr
 			{
-				// concaténation si les expressions elles-même portent du code
-				concat_ope (&$$.code,$1.code, $3.code);
-				
-				
-				if ($1.result->isConstant != 3) // si expr1 est déjà le résultat d'une sous expression! dans ce cas le résultat précédent est dans $t6
-				{	
-					struct symbol * n_t5 = alloc (); // stocker la première opérande
-					n_t5 -> value = 13;
-					
-					struct quad* quad_a1 = NULL;
-				
-					
-					if ($1.result->isVar == 0)
-						quad_a1 =  new_quad(label_quad,"li",$1.result,NULL,n_t5);
-					else
-						quad_a1 =  new_quad(label_quad,"lw",$1.result,NULL,n_t5);
-					label_quad ++ ;
-					
-					quad_add (&$$.code,quad_a1);
-				}
-				
-				
-				if ($3.result->isConstant != 3)
-				{	
-					struct symbol * n_t3 = alloc (); // stocker la seconde opérande
-					n_t3 -> value = 11;
-					
-					struct quad* quad_a3 = NULL;
-					
-					
-					if ($3.result->isVar == 0)
-						quad_a3 =  new_quad(label_quad,"li",$3.result,NULL,n_t3);
-					else
-						quad_a3 =  new_quad(label_quad,"lw",$3.result,NULL,n_t3);
-					label_quad ++;
-					quad_add (&$$.code,quad_a3);
-				}
-				
+				// création d'un symbole temporaire qui contiendra le résulat de l'addition
+				struct symbol* tmp = new_tmp(&tds);
+				tmp->isConstant = 3; // résulat temporaire d'une sous-expression
 				
 				struct quad* quad_s = new_quad(label_quad,"sub",$1.result,$3.result,tmp);
 				label_quad++;
+				
+				// concaténation si les expressions elles-même portent du code
+				concat (&$$.code,$1.code);
+				concat (&$$.code,$3.code);
 				
 				// on ajoute le quad correspondant à l'addition
 				quad_add (&$$.code, quad_s);
@@ -849,7 +695,6 @@ expr : 		ID
 			}
 		| '-' expr %prec Unary
 			{
-				$$.code = NULL;
 				// création d'un symbole temporaire qui contiendra le résulat de l'addition
 				struct symbol* tmp = new_tmp(&tds);
 				tmp->isConstant = 3; // résulat temporaire d'une sous-expression
@@ -863,7 +708,7 @@ expr : 		ID
 				quad_add (&$$.code, quad_n);
 				$$.result = tmp;
 			}
-		|expr_part // i++ , i-- ...
+		|expr_part // i++ , ...
 			{
 				$$.code = NULL;
 			}
@@ -916,15 +761,15 @@ int main()
 	
 	
 	
-/* 	print_tds(tds); // effectuer un traitement sur cette liste des symboles */
-/* 	quad_list_print(q_Globallist);	 */
+	print_tds(tds); // effectuer un traitement sur cette liste des symboles
+	quad_list_print(q_Globallist);	
 	
-	fprintf(stderr,"\n\nfin analyse\n");
+	/*fprintf(stderr,"\n\nfin analyse\n");
 	fprintf(stderr,"\n---> Début traitement\n\n");
 	
 	traitementQList(q_Globallist);
 	traitementTds(tds);
-	
+	*/
 	
 	return 0;
 }

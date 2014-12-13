@@ -35,12 +35,14 @@ void traitementTds( struct symbol* tds)
 }
 
 
-void traitementTab(struct symbol* s)
+void traitementTab(struct symbol* s,int indexKnown)
 {
 	printf("\tla $t2 %s\n",s->name);
-	printf("\tli $t1 %d\n",s->value); // index
+	if (!indexKnown)
+		printf("\tli $t1 %d\n",s->value); // index
 	printf("\tmul $t1 $t1 4\n"); 
-	printf("\tadd $t1 $t2 $t1\n");
+	printf("\tadd $t4 $t2 $t1\n");
+	// $t4 contient l'adresse de l'élément voulu
 }
 
 
@@ -72,6 +74,12 @@ void traitementQList( struct quad_list* q_list)
 						case 4:
 							printf("$a0 ");
 							break;
+						case 11 :
+							printf("$t3 ");
+							break;
+						case 13 :
+							printf("$t5 ");
+							break;
 					}
 					printf("%d\n",tmp->arg1->value);
 				}
@@ -96,9 +104,14 @@ void traitementQList( struct quad_list* q_list)
 								break;
 							case 2:
 								// récupération de l'adresse du tableau avec l'étiquette
-								traitementTab(tmp->arg1);
-								printf("\tlw $t0 0($t1)\n");
+								traitementTab(tmp->arg1,0);
+								printf("\tlw $t0 0($t4)\n");
 								break;
+							case 3 :
+								traitementTab(tmp->arg1,1);
+								printf("\tlw $t0 0($t4)\n");
+								break;
+								
 						}
 					}
 					
@@ -117,16 +130,26 @@ void traitementQList( struct quad_list* q_list)
 						// si le res est l'étiquette vers un tableau 
 						case 2:
 							// l'index du tableau est contenu dans res->value
-							traitementTab(tmp->res);
-							printf("\tsw $t0 0($t1)\n");
+							traitementTab(tmp->res,0);
+							printf("\tsw $t0 0($t4)\n");
+							break;
+						case 3 :
+							// l'index du tableau a été calculé auparavant et il se trouve dans $t1
+							traitementTab(tmp->res,1);
+							printf("\tsw $t0 0($t4)\n");
 							break;
 					}
 						
 				}
 				
-				else if (strcmp(tmp->op,"lw") ==0 ) // l'argument est forcément une variable
+				
+				else if (strcmp(tmp->op,"lw") ==0 ) // l'argument est forcément une variable 
 				{
-					printf("\tlw ");
+					if (tmp->arg1->isVar== 2 || tmp->arg1->isVar== 3 )
+					{
+						traitementTab(tmp->arg1,tmp->arg1->isVar - 2); 
+					}
+					printf("\t%s ",tmp->op);
 					switch (tmp->res->value)
 					{
 						case 2:
@@ -135,64 +158,45 @@ void traitementQList( struct quad_list* q_list)
 						case 4:
 							printf("$a0 ");
 							break;
+						case 9:
+							printf("$t1 ");
+							break;
+						case 8 :
+							printf("$t0 ");
+							break;
+						case 11 :
+							printf("$t3 ");
+							break;
+						case 13 :
+							printf("$t5 ");
+							break;
 					}
-					printf("%s\n",tmp->arg1->name);
+					if (tmp->arg1->isVar == 2 || tmp->arg1->isVar== 3)
+					{
+						printf("0($t4)\n");
+					}
+					else
+						printf("%s\n",tmp->arg1->name);
 				}
 				
-				
+				// opération arithmétique
 				else if (strcmp(tmp->op,"add") ==0  || strcmp(tmp->op,"mul") ==0  || (strcmp(tmp->op,"div") ==0 ) || (strcmp(tmp->op,"sub") ==0 ))
 				{
-					// dépend de l'arg1
-					switch (tmp->arg1->isVar)
+// 					printf("%s\n",tmp->op);
+					
+					if (tmp->arg1->isConstant== 3 || tmp->arg2->isConstant== 3)
 					{
-						case 0:
-							// variable tmp
-							printf("\tli $t1 %d\n",tmp->arg1->value);
-							break;
-						case 1:
-							// variables définies (i,j..)
-							printf("\tlw $t1 %s\n",tmp->arg1->name);
-							break;
-						case 2:
-							// élément de tableau
-							break;
+						printf("\tmove $t5 $t6\n");
 					}
 					
-					
-					// du second argument
-					switch(tmp->arg2->isVar)
-					{
-						case 0:
-							printf("\tli $t2 %d\n",tmp->arg2->value);
-							break;
-					}
-					
-					// effectuer l'opération
-					
-					printf("\t%s $t0 $t1 $t2\n",tmp->op);
+					printf("\t%s $t0 $t5 $t3\n",tmp->op);
 
-					// de l'endroit où on veut stocker le résultat 
 					
-					
-					switch (tmp->res->isVar)
+					if (tmp->res->isConstant== 3)
 					{
-						// si on souhaite faire plusieurs opérations imbriquées on doit garder les résultats temporaires
-						case 0:
-							// on ne fait rien car le résultat est déjà dans $t0
-							break;
-						// si le res est un ID 
-						case 1:
-							// stockage de la valeur souhaitée dans la zone mémoire correspondante
-							printf("\tsw $t0 %s\n",tmp->res->name);
-							break;
-						
-						// si le res est l'étiquette vers un tableau 
-						case 2:
-							// l'index du tableau est contenu dans res->value
-							traitementTab(tmp->res);
-							printf("\tsw $t0 0($t1)\n");
-							break;
+						printf("\tmove $t6 $t0\n");
 					}
+					
 				}
 				
 				// instruction syscall en mips
