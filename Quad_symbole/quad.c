@@ -140,10 +140,12 @@ void concat_ope (struct quad_list** l1, struct quad_list* op1, struct quad_list*
 	if (op2==NULL)
 	{
 		concat (l1,op1);
+		return;
 	}
 	if (op1 == NULL)
 	{
 		concat (l1,op2);
+		return;
 	}
 	
 	// liste non vide -> recherche priorité 

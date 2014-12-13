@@ -24,6 +24,8 @@ ascii		[\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/0-9\:\;\<\=\>\?\@\[\\\]\^_\`\{\|\}\~]*
 "++"			{return INCR;}
 "--"			{return DECR;}
 {nonAlphaNum}		{return yytext[0];}
+true|TRUE		{return TRUE;}
+false|FALSE		{return FALSE;}
 int			{return INT ;}
 stencil			{return STENCIL;}
 if			{return IF;}

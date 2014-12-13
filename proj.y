@@ -52,7 +52,8 @@
 %type <value> NUMERO
 %token <identificateur> ID
 %type <code_gen> declaration instruction en_tete prg stenc liste_inst
-%type <code_gen> expr expr_part	
+%type <code_gen> expr expr_part expr_bool 
+%token <code_gen> TRUE FALSE
 %type <tab> TAB init liste
 %token <chaine> CHAINE
 %token <op_part> INCR DECR
@@ -136,7 +137,12 @@ liste_inst :
 		
 
 instruction:	
-		declaration ';' //pour pouvoir écrire int i; puis i =5; par exemple
+
+		IF '(' expr_bool ')' '{' liste_inst '}'
+			{
+				$$.code = NULL;
+			}
+		|declaration ';' //pour pouvoir écrire int i; puis i =5; par exemple
 			{
 				$$.code = NULL;
 				concat (&$$.code,$1.code);
@@ -801,6 +807,13 @@ expr : 		ID
 			}
 		| expr '-' expr
 			{
+				printf("ici\n");
+				$$.code = NULL;
+				// création d'un symbole temporaire qui contiendra le résulat de l'addition
+				struct symbol* tmp = new_tmp(&tds);
+				tmp->isConstant = 3; // résulat temporaire d'une sous-expression
+				
+				
 				// concaténation si les expressions elles-même portent du code
 				concat_ope (&$$.code,$1.code, $3.code);
 				
@@ -883,6 +896,50 @@ expr_part :
 				$$.code = NULL;
 			}
 		| DECR expr 
+			{
+				$$.code = NULL;
+			}
+		;
+		
+expr_bool:	
+		TRUE
+			{
+				// génération d'un nouveau symbole pour TRUE -> pour la table des symboles
+				$$.code = NULL;
+
+				struct symbol* s_true = symbol_lookup(tds,"TRUE");
+				{
+					if (s_true == NULL)
+					{
+						s_true = new_cst (&tds,1);
+					}
+				}
+
+
+				// création d'un quad -> goto vers (on ne sait pas)
+
+					// création d'un symbole tmp qui sera juste un entier qui correspondra au label où aller
+
+				struct symbol* tmp = new_tmp(&tds);
+
+				struct quad* q_new = new_quad(label_quad,"goto",NULL,NULL,tmp);
+				label_quad++;
+
+				// completer la true_liste et la false_list des quads 
+
+					// ici on ne peut que remplir que la true_list 
+
+				$1.true_list = new_quad_list(q_new);
+
+				$$.true_list = $1.true_list;
+
+				// le code qui est porté est simplement le quad généré avec le "goto"
+
+				$$.result = s_true;
+				
+				quad_add (&$$.code,q_new);
+			}
+		|FALSE
 			{
 				$$.code = NULL;
 			}

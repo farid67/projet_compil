@@ -1,3 +1,4 @@
+ici
 	.text
 	.globl main
 
