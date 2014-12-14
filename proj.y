@@ -482,12 +482,48 @@ declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 		| STENCIL ID '{' NUMERO','NUMERO '}' '=' '{' init '{' liste '}' '}' 
 			{
 				$$.code = NULL;
+				int taille =  $10.nb_dimension + $12.nb_dimension, i ;
+				int* tab =  malloc (taille * sizeof(int));
+				for (i = 0 ; i < $10.nb_dimension; i++)
+				{
+					
+					tab[i] = $10.tab[i];
+				}
+				for (i = 0 ; i < $12.nb_dimension; i++)
+				{
+					
+					tab[i + $10.nb_dimension] = $12.tab[i];
+				}
+				
+				int * tab2 = malloc ((taille+2) * sizeof(int));
+				tab2[0] = $4;
+				tab2[1] = $6;
+				
+				for (i= 0 ; i <taille ; i++)
+				{
+					tab2[i+2] = tab[i];
+				}
+				
+				struct symbol *new_stencil = new_stenc($2,taille+2,tab2);
+				
+				tab_add (&tds,new_stencil);
 				
 				
 			}
 		| STENCIL ID '{' NUMERO ',' NUMERO '}' '=' '{' liste '}' 
 			{
 				$$.code = NULL;
+				int * tab = malloc ( ($10.nb_dimension + 2) * sizeof(int));
+				tab[0] = $4;
+				tab[1] = $6;
+				int i;
+				for (i  = 0 ;i < $10.nb_dimension ; i++)
+				{
+					tab[i+2] = $10.tab[i];
+				}
+				struct symbol * new_stencil = new_stenc($2,$10.nb_dimension+2,tab );
+				
+				tab_add(&tds,new_stencil);
 			}
 		|ID TAB '=' expr // tab[2][3] = i; ou bien tab[2] = 0; 
 		// implique de faire un sw précédé eventuellement d'un li si l'expression est une variable	
@@ -708,7 +744,13 @@ init:		'{' liste '}' ','
 			}
 		;
 
-liste:		NUMERO
+liste:		'-' NUMERO
+			{
+				$$.nb_dimension = 1;
+				$$.tab = malloc (sizeof (int));
+				$$.tab[0] = -$2;
+			}
+		| NUMERO
 			{
 				$$.nb_dimension = 1;
 				$$.tab = malloc (sizeof (int));
@@ -719,6 +761,12 @@ liste:		NUMERO
 				$$.nb_dimension = $1.nb_dimension +1;
 				$$.tab = realloc($1.tab,$1.nb_dimension +1);
 				$$.tab[$1.nb_dimension] = $3;
+			}
+		|liste ',' '-' NUMERO
+			{
+				$$.nb_dimension = $1.nb_dimension +1;
+				$$.tab = realloc($1.tab,$1.nb_dimension +1);
+				$$.tab[$1.nb_dimension] = -$4;
 			}
 		;
 
@@ -1064,6 +1112,23 @@ expr : 		ID
 				// création d'un symbole temporaire qui contiendra le résulat de l'addition
 				struct symbol* tmp = new_tmp(&tds);
 				tmp->isConstant = 3; // résulat temporaire d'une sous-expression
+				
+				
+				if ($2.result->isConstant != 3)
+				{	
+					struct symbol * n_t3 = alloc (); // stocker la seconde opérande
+					n_t3 -> value = 11;
+					
+					struct quad* quad_a3 = NULL;
+					
+					
+					if ($2.result->isVar == 0)
+						quad_a3 =  new_quad(label_quad,"li",$2.result,NULL,n_t3);
+					else
+						quad_a3 =  new_quad(label_quad,"lw",$2.result,NULL,n_t3);
+					label_quad ++;
+					quad_add (&$$.code,quad_a3);
+				}
 				
 				struct quad* quad_n = new_quad(label_quad,"neg",$2.result,NULL,tmp);
 				label_quad++;

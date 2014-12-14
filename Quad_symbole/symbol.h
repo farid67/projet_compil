@@ -8,7 +8,7 @@
 struct symbol 
 {
 	char* name;
-	int isConstant; // 1-> constante (true,false..) 2-> tampon pour tableaux 3 -> résultat intérmédiaire pour les expressions
+	int isConstant; // 1-> constante (true,false..) 2-> tampon pour tableaux 3 -> résultat intérmédiaire pour les expressions 4 -> tampon pour les stenc
 	int value;
 	int isVar ; // permet de différencier les variables de type i,j.. et autres identificateurs des variables utilisées pour les goto
 	// si isVar = 2 alors le symbole est un élément de tableau 
@@ -53,6 +53,7 @@ void print_tds(struct symbol* tds);
 // ajout d'un tableau en queue de table des symboles
 void tab_add (struct symbol** tds, struct symbol* tab);
 
+
 // complete les éléments d'un tableau de la tds avec ce qui est contenu dans le tableau
 void tab_complete (struct symbol** tab,int* tab_int);
 
@@ -66,6 +67,7 @@ void tab_complete (struct symbol** tab,int* tab_int);
 // valeur renvoyée -> pointeur sur le premier élément donc tab_0_0 dans notre cas
 struct symbol* new_tab(char* nom, int* dim, int nb_dim);
 
+struct symbol* new_stenc(char* nom, int nb_el, int* el);
 
 
 

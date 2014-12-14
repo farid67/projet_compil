@@ -30,6 +30,21 @@ void traitementTds( struct symbol* tds)
 				printf("\n");
 			}
 			
+			if (tmp->isConstant == 4)
+			{
+				printf("%s:\t.word ",tmp->name);
+				int i,nb_elem = tmp->value - 2 ;
+				tmp = tmp->next->next;
+				for (i = 0; i < nb_elem-1;i++)
+				{
+					tmp=tmp->next;
+					printf("%d ,",tmp->value);
+				}
+				tmp = tmp->next;
+				printf("%d ",tmp->value);
+				printf("\n");
+			}
+			
 			
 			
 			tmp = tmp->next;
