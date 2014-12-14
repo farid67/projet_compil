@@ -479,6 +479,14 @@ declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 				concat (&$$.code,$3.code);
 				quad_add (&$$.code, q_assign);
 			}
+		| STENCIL ID '{' liste '}' '=' '{' init '{' liste '}' '}' 
+			{
+				$$.code=NULL;
+			}
+		| STENCIL ID '{' liste '}' '=' '{' liste '}' 
+			{
+				$$.code = NULL;
+			}
 		|ID TAB '=' expr // tab[2][3] = i; ou bien tab[2] = 0; 
 		// implique de faire un sw précédé eventuellement d'un li si l'expression est une variable	
 			{
