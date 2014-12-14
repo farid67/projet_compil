@@ -353,12 +353,12 @@ instruction:
 				concat (&$$.code,$2.code);
 				concat (&$$.code,$4.code);
 			}
-/*	Pour le moment problème avec les chaines de caractères (gestion des " étrange, provoquent des erreurs semblerait-il)
-		| PRINTF '(' chaineAscii ')' ';'
+/*	Pour le moment problème avec les chaines de caractères (gestion des " étrange, provoquent des erreurs semblerait-il) */
+		| PRINTF '(' CHAINE ')' ';'
 			{
 				$$.code=NULL;
 			}
-		*/
+
 		| PRINTI '(' expr ')' ';'
 			{
 				$$.code = NULL;
