@@ -65,7 +65,7 @@
 %left OR
 %left AND
 %left DIFF EQUAL
-%left '>' '<' "<=" ">="
+%left '>' '<'
 %left '+' '-'
 %left '*' '/'
 %left Unary INCR DECR NOT

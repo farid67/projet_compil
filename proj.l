@@ -10,17 +10,17 @@
 
 space_newLine	[ \t\n]*
 nonAlphaNum	["*""+""\-""/""{""}"","";""=""$""\[""\]""\(""\)""&"">""<""!""|""\""]
-commentaire	"/*"([^"*"]*["*"]+[^/*])*[^*]*[*]+"/"
+/* commentaire	"/*"([^"*"]*["*"]+[^/*])*[^*]*[*]+"/" */
 ascii		[\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/0-9\:\;\<\=\>\?\@\[\\\]\^_\`\{\|\}\~]*
 /* comm_ligne	"//".\n */
 
+%x COMMENT
 
 %%
 
 
 
 {space_newLine} 	{if (strcmp(yytext,"\n") == 0) {compteur_ligne++;}}
-{commentaire}		{}
 "++"			{return INCR;}
 "--"			{return DECR;}
 "=="			{return EQUAL;}
@@ -56,6 +56,19 @@ return			{return RETURN;}
 /* 				printf("identificateur reconnu\n"); */
 				return ID;
 			}
+
+
+
+\/\*         	{   // début du commentaire, se met dans l'"état" COMMENT
+					BEGIN(COMMENT);
+				}
+<COMMENT>\*\/ 	{   // fin du commentaire, retour à une lecture "normale"
+					BEGIN(INITIAL);
+				}
+<COMMENT>\n    { compteur_ligne++; }   // on incrémente les lignes dans le commentaire (le cas échéant)
+<COMMENT>.     {}   // on ignore tout quand on est dans l'état COMMENT
+
+
 
 <<EOF>>			{ yyterminate();}
 .			{
