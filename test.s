@@ -3,6 +3,29 @@ ici
 	.globl main
 
 main:
+<<<<<<< HEAD
+	li $t0 3
+	sw $t0 i_
+
+
+
+tmp_2 : 
+	lw $t6 i_
+	li $t7 2
+	 bge $t6 $t7 tmp_8
+	b tmp_9
+
+
+
+tmp_8 : 
+	lw $a0 i_
+	li $v0 1
+	syscall
+
+
+
+tmp_9 : 
+=======
 	li $t0 0
 	sw $t0 i_
 	li $t0 1
@@ -39,21 +62,30 @@ main:
 	lw $a0 j_
 	li $v0 1
 	syscall
+>>>>>>> 9598867015ac27a5dd7d805d812bbcb93a9afc1e
 	li $a0 0
 	li $v0 17
 	syscall
 
 
 
+<<<<<<< HEAD
+tmp_14 : 
+=======
 tmp_15 : 
+>>>>>>> 9598867015ac27a5dd7d805d812bbcb93a9afc1e
 	nop
 
 	.data
 height_:	.word 128
 width_:	.word 128
+<<<<<<< HEAD
+i_:	.word 0
+=======
 tab_:	.word 5 ,6 ,7 
 i_:	.word 0
 j_:	.word 0
 k_:	.word 0
 l_:	.word 0
+>>>>>>> 9598867015ac27a5dd7d805d812bbcb93a9afc1e
 

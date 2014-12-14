@@ -479,11 +479,13 @@ declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 				concat (&$$.code,$3.code);
 				quad_add (&$$.code, q_assign);
 			}
-		| STENCIL ID '{' liste '}' '=' '{' init '{' liste '}' '}' 
+		| STENCIL ID '{' NUMERO','NUMERO '}' '=' '{' init '{' liste '}' '}' 
 			{
-				$$.code=NULL;
+				$$.code = NULL;
+				
+				
 			}
-		| STENCIL ID '{' liste '}' '=' '{' liste '}' 
+		| STENCIL ID '{' NUMERO ',' NUMERO '}' '=' '{' liste '}' 
 			{
 				$$.code = NULL;
 			}
