@@ -58,14 +58,14 @@
 %token <chaine> CHAINE
 %token <op_part> INCR DECR
 %token <keyword> INT CONST IF ELSE WHILE FOR STENCIL PRINTI PRINTF MAIN RETURN 
-%token <keyword> EQUAL OR AND NOT DIFF 
+%token <keyword> EQUAL OR AND NOT DIFF LE GE
 
 
 %right '='
 %left OR
 %left AND
 %left DIFF EQUAL
-%left '>' '<'
+%left '>' '<' LE GE
 %left '+' '-'
 %left '*' '/'
 %left Unary INCR DECR NOT

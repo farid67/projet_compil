@@ -28,6 +28,8 @@ ascii		[\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/0-9\:\;\<\=\>\?\@\[\\\]\^_\`\{\|\}\~]*
 "||"			{return OR;}
 "&&"			{return AND;}
 "!"			{return NOT;}
+"<="		{return LE;}
+">="		{return GE;}
 {nonAlphaNum}		{return yytext[0];}
 true|TRUE		{return TRUE;}
 false|FALSE		{return FALSE;}
