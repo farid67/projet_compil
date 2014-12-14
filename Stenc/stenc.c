@@ -192,13 +192,19 @@ void traitementQList( struct quad_list* q_list)
 				}
 				
 				
-				else if (strcmp(tmp->op,"lw") ==0 ) // l'argument est forcément une variable 
+				else if (strcmp(tmp->op,"lw") ==0) // l'argument est forcément une variable 
 				{
 					if (tmp->arg1->isVar== 2 || tmp->arg1->isVar== 3 )
 					{
 						traitementTab(tmp->arg1,tmp->arg1->isVar - 2); 
 					}
-					printf("\t%s ",tmp->op);
+					
+					if (tmp->arg1->value == 16 || tmp->arg1->value ==17)
+						printf("\t move ");
+					else
+						printf("\t%s ",tmp->op);
+					
+					
 					switch (tmp->res->value)
 					{
 						case 2:
@@ -226,7 +232,22 @@ void traitementQList( struct quad_list* q_list)
 							printf("$t7 ");
 							break;
 					}
-					if (tmp->arg1->isVar == 2 || tmp->arg1->isVar== 3)
+					
+					if (tmp->arg1->value == 16 || tmp->arg1->value ==17)
+					{
+					
+						switch (tmp->arg1->value)
+						{
+							case 16:
+								printf("$s0\n");
+								break;
+							case 17:
+								printf("$s1\n");
+								break;
+						}
+					}
+					
+					else if (tmp->arg1->isVar == 2 || tmp->arg1->isVar== 3)
 					{
 						printf("0($t4)\n");
 					}
@@ -273,6 +294,42 @@ void traitementQList( struct quad_list* q_list)
 							printf("\tsw $t0 0($t4)\n");
 							break;
 					}
+				}
+				
+				// stenc
+				else if (strcmp(tmp->op,"adds") ==0  || strcmp(tmp->op,"muls") ==0  || (strcmp(tmp->op,"divs") ==0 ) || (strcmp(tmp->op,"subs") ==0 ))
+				{
+// 					printf("%s\n",tmp->op);
+					
+					if (tmp->arg1->isConstant== 3 || tmp->arg2->isConstant== 3)
+					{
+						printf("\tmove $t5 $t6\n");
+					}
+					
+					char* op = strdup (tmp->op);
+					op[3] = '\0';
+					
+					printf("\t%s $t0 $t5 $t3\n",op);
+
+					
+					if (tmp->res->isConstant== 3)
+					{
+						printf("\tmove $t6 $t0\n");
+					}
+					
+					switch (tmp->res->value)
+					{
+						case 16:
+							printf("\tmove $s0 $t0\n");
+							break;
+						
+						case 17:
+							printf("\tmove $s1 $t0\n");
+							break;
+							
+					}
+					
+					printf("\tmove $t0 $s0\n");
 				}
 				
 				// instruction syscall en mips

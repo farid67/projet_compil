@@ -242,7 +242,7 @@ struct symbol* new_stenc (char* nom, int nb_elem, int* elem)
 	{
 		struct symbol* tmp = new_tmp_tab_element(nom,i);
 		tmp->value = elem[i];
-		tmp->isVar = 0;
+		tmp->isVar = 2;
 		it -> next = tmp;
 		it = it -> next;
 	}
