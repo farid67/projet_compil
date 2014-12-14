@@ -1273,6 +1273,126 @@ expr : 		ID
 		| ID '$' ID TAB
 			{
 				$$.code = NULL;
+				
+				// récupération des info à propos du stenc
+				
+				struct symbol * stenc = symbol_lookup(tds,$1);
+				
+				if (stenc == NULL || stenc->isConstant!=4 )
+				{
+					printf("erreur stenc inconnu\n");
+				}
+				
+				// récupération des info à propos du tab
+				
+				struct symbol * tab = symbol_lookup(tds,$3);
+				
+				if (tab == NULL || tab->isConstant!=2 )
+				{
+					printf("erreur tableau inconnu\n");
+				}
+				
+				
+				// le res contiendra le resultat de l'operation
+				struct symbol* res = new_tmp (&tds);
+				res->value = 16; // $s0
+				res->isConstant= 3;
+				
+				
+				
+				int i,index=0;
+				
+				// ATTENTION la taille des dimensions sont stockés dans le sens inverse 
+				
+				for (i = 0;i< $2.nb_dimension-1; i++)
+				{
+					if (tab->dimension_size[i] < $4.tab[i])
+					{
+						yyerror("overflow in tab");
+						return -1;
+					}
+/* 					printf("dimension_size %d = %d\n",i,id->dimension_size[i]); */
+					index += (tab->dimension_size[i+1]) * $4.tab[i] ;
+				}
+				index += $4.tab[i];				
+				
+				
+				
+				
+				int dimension= stenc->next->next->value;
+				int distance= stenc->next->value;
+				
+				struct quad* q_load = NULL;
+				struct symbol * s=NULL; // pointeur tableau
+				
+				struct symbol * n_t5 = alloc (); // stocker la première opérande
+				n_t5 -> value = 13;
+				
+				struct symbol * n_t3 = alloc (); // stocker la seconde opérande
+				n_t3 -> value = 11;
+				
+				struct symbol * n_t6 = alloc (); // stocker la seconde opérande
+				n_t6 -> value = 14;
+				
+				int compteur =0;
+				
+				struct symbol * ptr = NULL;
+				struct symbol* intermed  = new_tmp(&tds);
+				intermed -> value = 17;
+				intermed ->isConstant = 3;
+				
+				
+				for (i = index - distance -   $4.tab[$2.nb_dimension -1 ] * (dimension -1); 
+				i <= index + distance + $4.tab[$2.nb_dimension -1 ] * (dimension -1); i++)
+				{
+					s = alloc ();
+					if ($2.indexDefined == 1)
+						s -> isVar = 2;// c'est un élément de tableau
+					else
+						s -> isVar = 3;// on ne connait pas l'index à l'avance -> par exemple tab[i] demande d'abord une évaluation de i 
+					s -> name = strdup (tab->name);
+					s -> value = i;
+					q_load = new_quad (label_quad,"lw",s,NULL,n_t5);
+					label_quad++;
+					
+					quad_add (&$$.code,q_load);
+					
+					ptr = alloc();
+					ptr->isVar = 2;
+					ptr->value = compteur;
+					compteur ++;
+					ptr->name = strdup (stenc->name);
+					
+					q_load = new_quad (label_quad,"lw",ptr,NULL,n_t3);
+					label_quad++;
+					
+					quad_add (&$$.code,q_load);
+				
+					
+					q_load = new_quad (label_quad,"muls",n_t5,n_t3,intermed);
+					label_quad++;
+					
+					quad_add(&$$.code,q_load);
+					
+					
+					
+					q_load = new_quad (label_quad,"lw",intermed,NULL,n_t5);
+					label_quad++;
+					quad_add(&$$.code,q_load);
+					
+					q_load = new_quad (label_quad,"lw",res,NULL,n_t3);
+					label_quad++;
+					quad_add(&$$.code,q_load);
+					
+					
+					
+					q_load = new_quad (label_quad,"adds",n_t5,n_t3,res);
+					label_quad++;
+					
+					quad_add (&$$.code,q_load);
+				}
+				
+				$$.result = res;
 			}
 		;
 			
