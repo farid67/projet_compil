@@ -8,6 +8,9 @@ int main()
 	int j = 1;
 	int k = 2;
 	int l = 12;
+	/* test
+	commentaire
+	*/
 	j = tab[i] + tab[j] * tab[k] - l ;
 	printi(j);
 	return 0;
