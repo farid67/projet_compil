@@ -76,6 +76,8 @@ return			{return RETURN;}
 					yylval.chaine = strdup(yytext+1);
 					if (yylval.chaine[yyleng-2] != '"')
 						printf("Chaîne mal formatée");
+					else
+						yylval.chaine[yyleng-2] = 0;
 					return CHAINE;
 				}
 
