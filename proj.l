@@ -24,6 +24,10 @@ ascii		[\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/0-9\:\;\<\=\>\?\@\[\\\]\^_\`\{\|\}\~]*
 "++"			{return INCR;}
 "--"			{return DECR;}
 "=="			{return EQUAL;}
+"!="			{return DIFF;}
+"||"			{return OR;}
+"&&"			{return AND;}
+"!"			{return NOT;}
 {nonAlphaNum}		{return yytext[0];}
 true|TRUE		{return TRUE;}
 false|FALSE		{return FALSE;}

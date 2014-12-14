@@ -16,6 +16,12 @@ void quad_add(struct quad_list** liste, struct quad* new)
 		{
 			tmp = tmp->next;
 		}
+		
+		// décalage des goto
+		if (isBranch(new))
+		{
+			new->res->value ++;
+		}
 		tmp->next = new_quad(new->label,new->op,new->arg1,new->arg2,new->res);
 		
 // 		tmp = tmp->next; // tmp pointe sur le quad ajouté
@@ -28,6 +34,16 @@ void quad_add(struct quad_list** liste, struct quad* new)
 	}
 }
 
+
+int isBranch(struct quad* node)
+{
+	if (strcmp(node->op,"goto") == 0 || strcmp(node->op,">") == 0 || strcmp(node->op,"<") == 0 || strcmp(node->op,">=") == 0 || strcmp(node->op,"<=") == 0  
+		|| strcmp(node->op,"==") == 0 || strcmp(node->op,"!=") == 0  )
+	{
+		return 1;
+	}
+	return 0;
+}
 
 void quad_print(struct quad* q)
 {
@@ -220,6 +236,7 @@ void concat(struct quad_list** l1, struct quad_list* l2)
 	}
 	
 	int next_label = next_quad(*l1);
+	int add = next_label - l2->node->label;
 	
 	tmp = (*l1)->node;
 	while (tmp->next != NULL)
@@ -235,6 +252,10 @@ void concat(struct quad_list** l1, struct quad_list* l2)
 	while (tmp->next !=NULL)
 	{
 		tmp->next->label = next_label;
+		if (isBranch(tmp))
+		{
+			tmp->res->value += add;
+		}
 		next_label ++;
 		tmp = tmp ->next;
 	}

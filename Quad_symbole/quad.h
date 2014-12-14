@@ -34,6 +34,8 @@ struct quad_list
 
 
 
+int isBranch(struct quad* node); // 1 -> quad de branchement, 0 sinon
+
 
 //~ void quad_free(struct quad* q);
 void quad_add(struct quad_list** liste, struct quad* q);

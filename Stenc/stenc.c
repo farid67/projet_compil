@@ -108,6 +108,12 @@ void traitementQList( struct quad_list* q_list)
 						case 13 :
 							printf("$t5 ");
 							break;
+						case 14 :
+							printf("$t6 ");
+							break;
+						case 15 :
+							printf("$t7 ");
+							break;
 					}
 					printf("%d\n",tmp->arg1->value);
 				}
@@ -128,7 +134,7 @@ void traitementQList( struct quad_list* q_list)
 								printf("\tli $t0 %d\n",tmp->arg1->value);
 								break;
 							case 1:
-								printf("\tmove $t0 %s\n",tmp->arg1->name);
+								printf("\tlw $t0 %s\n",tmp->arg1->name);
 								break;
 							case 2:
 								// récupération de l'adresse du tableau avec l'étiquette
@@ -198,6 +204,12 @@ void traitementQList( struct quad_list* q_list)
 						case 13 :
 							printf("$t5 ");
 							break;
+						case 14 :
+							printf("$t6 ");
+							break;
+						case 15 :
+							printf("$t7 ");
+							break;
 					}
 					if (tmp->arg1->isVar == 2 || tmp->arg1->isVar== 3)
 					{
@@ -225,6 +237,27 @@ void traitementQList( struct quad_list* q_list)
 						printf("\tmove $t6 $t0\n");
 					}
 					
+					
+					switch (tmp->res->isVar)
+					{
+						// si le res est un ID 
+						case 1:
+							// stockage de la valeur souhaitée dans la zone mémoire correspondante
+							printf("\tsw $t0 %s\n",tmp->res->name);
+							break;
+						
+						// si le res est l'étiquette vers un tableau 
+						case 2:
+							// l'index du tableau est contenu dans res->value
+							traitementTab(tmp->res,0);
+							printf("\tsw $t0 0($t4)\n");
+							break;
+						case 3 :
+							// l'index du tableau a été calculé auparavant et il se trouve dans $t1
+							traitementTab(tmp->res,1);
+							printf("\tsw $t0 0($t4)\n");
+							break;
+					}
 				}
 				
 				// instruction syscall en mips
@@ -240,7 +273,32 @@ void traitementQList( struct quad_list* q_list)
 				
 				else if (strcmp(tmp->op,"==") == 0)
 				{
-					
+					printf("\t beq $t6 $t7 %s\n",labelGoto(q_list,tmp->res->value));
+				}
+				
+				else if (strcmp(tmp->op,"!=") == 0)
+				{
+					printf("\t bne $t6 $t7 %s\n",labelGoto(q_list,tmp->res->value));
+				}
+				
+				else if (strcmp(tmp->op,">") == 0)
+				{
+					printf("\t bgt $t6 $t7 %s\n",labelGoto(q_list,tmp->res->value));
+				}
+				
+				else if (strcmp(tmp->op,">=") == 0)
+				{
+					printf("\t bge $t6 $t7 %s\n",labelGoto(q_list,tmp->res->value));
+				}
+				
+				else if (strcmp(tmp->op,"<") == 0)
+				{
+					printf("\t blt $t6 $t7 %s\n",labelGoto(q_list,tmp->res->value));
+				}
+				
+				else if (strcmp(tmp->op,"<=") == 0)
+				{
+					printf("\t ble $t6 $t7 %s\n",labelGoto(q_list,tmp->res->value));
 				}
 				
 				else if (strcmp(tmp->op,"nop") == 0)

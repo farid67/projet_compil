@@ -1,0 +1,14 @@
+const int height = 128;
+const int width = 128;
+
+int main()
+{
+	int i=2;
+	int tab[3] = {1,2,3};
+	if (tab[2] <= 5)
+	{
+		i = 3;
+	}
+	printi(i);
+	return 0;
+}
