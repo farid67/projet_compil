@@ -13,5 +13,6 @@ int main()
 	*/
 	j = tab[i] + tab[j] * tab[k] - l ;
 	printi(j);
+	printf("test");
 	return 0;
 }

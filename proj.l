@@ -13,6 +13,7 @@ nonAlphaNum	["*""+""\-""/""{""}"","";""=""$""\[""\]""\(""\)""&"">""<""!""|""\""]
 /* commentaire	"/*"([^"*"]*["*"]+[^/*])*[^*]*[*]+"/" */
 ascii		[\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/0-9\:\;\<\=\>\?\@\[\\\]\^_\`\{\|\}\~]*
 /* comm_ligne	"//".\n */
+string			\"(\\.|[^\\"])*\"
 
 %x COMMENT
 
@@ -70,6 +71,13 @@ return			{return RETURN;}
 <COMMENT>\n    { compteur_ligne++; }   // on incrémente les lignes dans le commentaire (le cas échéant)
 <COMMENT>.     {}   // on ignore tout quand on est dans l'état COMMENT
 
+
+{string}		{
+					yylval.chaine = strdup(yytext+1);
+					if (yylval.chaine[yyleng-2] != '"')
+						printf("Chaîne mal formatée");
+					return CHAINE;
+				}
 
 
 <<EOF>>			{ yyterminate();}
