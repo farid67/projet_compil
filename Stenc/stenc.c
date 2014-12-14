@@ -298,7 +298,7 @@ void traitementQList( struct quad_list* q_list)
 				
 				else if (strcmp(tmp->op,"<=") == 0)
 				{
-					printf("\t ble $t6 $t7 %s\n",labelGoto(q_list,tmp->res->value));
+					printf("\t bge $t7 $t6 %s\n",labelGoto(q_list,tmp->res->value));
 				}
 				
 				else if (strcmp(tmp->op,"nop") == 0)
