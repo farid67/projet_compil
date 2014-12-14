@@ -23,6 +23,7 @@ ascii		[\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/0-9\:\;\<\=\>\?\@\[\\\]\^_\`\{\|\}\~]*
 {commentaire}		{}
 "++"			{return INCR;}
 "--"			{return DECR;}
+"=="			{return EQUAL;}
 {nonAlphaNum}		{return yytext[0];}
 true|TRUE		{return TRUE;}
 false|FALSE		{return FALSE;}

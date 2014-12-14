@@ -2,9 +2,11 @@
 
 
 void traitementTds( struct symbol* tds)
-{
+{	
+	
 	if (tds != NULL)
 	{
+		
 		printf("\n\t.data\n");
 		struct symbol* tmp = tds;
 		do
@@ -28,11 +30,14 @@ void traitementTds( struct symbol* tds)
 				printf("\n");
 			}
 			
+			
+			
 			tmp = tmp->next;
 		}while (tmp!= NULL);
 		printf("\n");
 	}
 }
+
 
 
 void traitementTab(struct symbol* s,int indexKnown)
@@ -43,6 +48,29 @@ void traitementTab(struct symbol* s,int indexKnown)
 	printf("\tmul $t1 $t1 4\n"); 
 	printf("\tadd $t4 $t2 $t1\n");
 	// $t4 contient l'adresse de l'élément voulu
+}
+
+char* labelGoto(struct quad_list* q_list, int label)
+{
+	if (q_list == NULL)
+	{
+		return NULL;
+	}
+	else
+	{
+		struct quad* tmp = q_list ->node;
+		
+		do
+		{
+			if (tmp->label == label)
+			{
+				return tmp->res->name;
+			}
+			tmp = tmp->next;
+		}while (tmp!= NULL);
+		return NULL;
+	}
+	
 }
 
 
@@ -204,6 +232,28 @@ void traitementQList( struct quad_list* q_list)
 				{
 					printf("\t%s\n",tmp->op);
 				}
+				
+				else if (strcmp(tmp->op,"label") == 0)
+				{
+					printf("\n\n\n%s : \n",tmp->res->name);
+				}
+				
+				else if (strcmp(tmp->op,"==") == 0)
+				{
+					
+				}
+				
+				else if (strcmp(tmp->op,"nop") == 0)
+				{
+					printf("\t%s\n",tmp->op);
+				}
+				
+				else if (strcmp(tmp->op,"goto") == 0)
+				{
+					// on récupère le nom 
+					printf("\tb %s\n",labelGoto(q_list,tmp->res->value));
+				}
+				
 				tmp = tmp->next;
 			}while (tmp!= NULL);
 			

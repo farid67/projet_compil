@@ -58,9 +58,13 @@
 %token <chaine> CHAINE
 %token <op_part> INCR DECR
 %token <keyword> INT CONST IF ELSE WHILE FOR STENCIL PRINTI PRINTF MAIN RETURN 
+%token <keyword> EQUAL OR AND NOT
 
 
 %right '='
+%left OR
+%left AND
+%left NOT
 %left '+' '-'
 %left '*' '/'
 %left Unary INCR DECR
@@ -76,6 +80,19 @@ stenc:		en_tete prg
 				
 				concat (&$$.code,$1.code);
 				concat (&$$.code,$2.code);
+				
+				
+				struct symbol* new_label = new_tmp(&tds);
+				new_label->isVar = 5; // création d'un symbole qui sera une étiquette dans le code Mips
+				
+				struct quad* q_label = new_quad(next_quad($2.code),"label",NULL,NULL,new_label);
+				label_quad++;
+				
+				struct quad* q_nop = new_quad(next_quad($2.code)+1,"nop",NULL,NULL,NULL);
+				label_quad++;
+				
+				quad_add(&$$.code,q_label);
+				quad_add(&$$.code,q_nop);
 				
 				concat(&q_Globallist,$$.code);
 				
@@ -141,6 +158,48 @@ instruction:
 		IF '(' expr_bool ')' '{' liste_inst '}'
 			{
 				$$.code = NULL;
+				
+				
+				struct symbol* new_label = new_tmp(&tds);
+				new_label->isVar = 5; // création d'un symbole qui sera une étiquette dans le code Mips
+				
+				struct quad* q_label = new_quad(next_quad($3.code),"label",NULL,NULL,new_label);
+				label_quad++;
+				
+				struct quad_list* tmp_list = new_quad_list (q_label);
+				concat(&tmp_list,$6.code);
+				
+				$6.code = tmp_list;
+				
+				// concaténation du code de la condition et du code de la liste d'instruction 
+				concat(&$$.code,$3.code);
+				concat (&$$.code,$6.code);
+				
+				complete(&$3.true_list,$6.code->node->label);
+				complete(&$3.false_list,label_quad);
+				
+				
+				// ajout d'un quad qui se situera après la liste d'instructions
+				
+				struct symbol* new_label2 = new_tmp(&tds);
+				new_label2->isVar = 5; 
+				struct quad* q_label2 = new_quad(next_quad($6.code),"label",NULL,NULL,new_label2);
+				label_quad++;
+				
+				quad_add (&$$.code,q_label2);
+				
+				// $$.next = $4.next;
+
+				// complete la true_liste et la false_list de la condition
+
+/* 				printf("label à compléter : %d\n",label_quad); */
+				// la valeur courante de label_quad sera l'entier que prendra le prochain quad
+				
+				// on va essayer d'ajouter un champ next, et quand celui-ci sera nécessaire, on insèrera un goto
+				
+/* 				$4.next = next_quad($4.code);// parcours de la liste stmlist +1 */
+				
+				
 			}
 		|declaration ';' //pour pouvoir écrire int i; puis i =5; par exemple
 			{
@@ -902,6 +961,7 @@ expr_part :
 		;
 		
 expr_bool:	
+		
 		TRUE
 			{
 				// génération d'un nouveau symbole pour TRUE -> pour la table des symboles
@@ -935,13 +995,85 @@ expr_bool:
 
 				// le code qui est porté est simplement le quad généré avec le "goto"
 
-				$$.result = s_true;
+/* 				$$.result = s_true; */
 				
 				quad_add (&$$.code,q_new);
 			}
 		|FALSE
 			{
+				$$.code = $$.true_list = $$.false_list =NULL;
+				// génération d'un nouveau symbole pour FALSE -> pour la table des symboles
+
+				struct symbol* s_false = symbol_lookup(tds,"FALSE");
+				{
+					if (s_false == NULL)
+					{
+						s_false = new_cst (&tds,0);
+					}
+				}
+
+				// création d'un quad -> goto vers (on ne sait pas)
+
+					// création d'un symbole tmp qui sera juste un entier qui correspondra au label où aller
+
+				struct symbol* tmp = new_tmp(&tds);
+
+				struct quad* q_new = new_quad(label_quad,"goto",NULL,NULL,tmp);
+				label_quad++;
+
+				// completer la true_liste et la false_list des quads 
+
+					// ici on ne peut que remplir que la false_list 
+
+				$1.false_list = new_quad_list(q_new);
+
+				$$.false_list = $1.false_list;
+
+				// le code qui est porté est simplement le quad généré avec le "goto"
+
+/* 				$$.result = s_false; */
+				
+				quad_add (&$$.code,q_new);
+			}
+		|expr EQUAL expr
+			{
 				$$.code = NULL;
+				
+				// création d'une étiquette ici 
+				
+				struct symbol* new_label = new_tmp(&tds);
+				new_label->isVar = 5; // création d'un symbole qui sera une étiquette dans le code Mips
+				
+				struct quad* q_label = new_quad(label_quad,"label",NULL,NULL,new_label);
+				label_quad++;
+				
+				// créer un nouveau symbole qui contiendra le résultat de la condition
+				struct symbol* tmp = new_tmp(&tds);
+				// le symbole tmp sera le résultat du quad créer par cette condition
+					//on ne connait pas encore le résultat de ce test
+
+				struct quad* q_eval = new_quad(label_quad,"==",$1.result,$3.result,tmp);
+				label_quad ++;// incrémentation du label
+
+				// création d'un label de goto 
+					// le symbole tmp2 est un symbole qui est considéré comme un entier pour le label du goto
+				struct symbol* tmp2 = new_tmp (&tds);
+				struct quad* q_goto = new_quad(label_quad,"goto",NULL,NULL,tmp2);
+				label_quad ++;
+				
+				quad_add(&$$.code,q_label);
+				quad_add(&$$.code,q_eval);
+				quad_add(&$$.code,q_goto);
+				$$.true_list = new_quad_list(q_eval);
+				$$.false_list = new_quad_list(q_goto);
+				
+			}
+		|'('expr_bool')'
+			{
+				$$.code = $$.true_list = $$.false_list =  NULL;
+				$$.code = $2.code;
+				$$.true_list = $2.true_list;
+				$$.false_list = $2.false_list;
 			}
 		;
 		

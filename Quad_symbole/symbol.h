@@ -14,6 +14,7 @@ struct symbol
 	// si isVar = 2 alors le symbole est un élément de tableau 
 	// si isVar = 3 alors le symbole est un élément de tableau mais l'index n'est pas connu tab[i] par exemple
 	// si isVar = 4 le symbol est une étiquette pour une chaine de caractère // ATTENTION pas encore gérer
+	// si isVar = 5 le symbol est une étiquette pour les goto dans les structures de contrôle 
 	
 	int* dimension_size; // existe seulement pour les tampons , et le chaine de caractère
 	
@@ -64,6 +65,7 @@ void tab_complete (struct symbol** tab,int* tab_int);
 
 // valeur renvoyée -> pointeur sur le premier élément donc tab_0_0 dans notre cas
 struct symbol* new_tab(char* nom, int* dim, int nb_dim);
+
 
 
 

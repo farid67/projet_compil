@@ -4,7 +4,8 @@
 
 #include "quad.h"
 
-
+// renvoie l'étiquette en fonction du label 
+char* labelGoto(struct quad_list* q_list, int label);
 
 void traitementTds(struct symbol* tds);
 
