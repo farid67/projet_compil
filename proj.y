@@ -1227,6 +1227,8 @@ expr : 		ID
 			{
 				$$.code = NULL;
 				
+				
+				
 				// récupération des info à propos du stenc
 				
 				struct symbol * stenc = symbol_lookup(tds,$4);
@@ -1293,11 +1295,32 @@ expr : 		ID
 				struct symbol* intermed  = new_tmp(&tds);
 				intermed -> value = 17;
 				intermed ->isConstant = 3;
+				/*
+				printf("distance : %d\n",distance);
+				printf("dimension : %d\n",dimension);
+				printf("tab.tab[1] : %d\n",tab->dimension_size[0]);
+				*/
 				
 				
-				for (i = index - distance -   $2.tab[$2.nb_dimension -1 ] * (dimension -1); 
-				i <= index + distance + $2.tab[$2.nb_dimension -1 ] * (dimension -1); i++)
+				// free registers $s0 et $s1
+				
+				
+				struct quad *setZ = NULL;
+				setZ = new_quad (label_quad,"free",res,NULL,NULL);
+				label_quad++;
+				
+				quad_add (&$$.code,setZ);
+				
+				setZ = new_quad (label_quad,"free",intermed,NULL,NULL);
+				label_quad++;
+				quad_add (&$$.code,setZ);
+				
+				
+				
+				for (i = index - distance -   tab->dimension_size[$2.nb_dimension -1 ] * (dimension -1); 
+				i <= index + distance + tab->dimension_size[$2.nb_dimension -1 ] * (dimension -1); i++)
 				{
+/* 					printf("i : %d\n",i); */
 					s = alloc ();
 					if ($2.indexDefined == 1)
 						s -> isVar = 2;// c'est un élément de tableau

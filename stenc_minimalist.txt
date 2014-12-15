@@ -3,12 +3,21 @@ const int width = 128;
 
 int main()
 {
-	int i = 0 ;
+	stencil gx{1,2} = {{-1,0,1},{-2,0,2},{-1,0,1}};
 	
-	for (i = 0 ; i < 5; i++)
-	{
-		printi(i);
-	}
+	int tab[3][3] = {{1,2,3},{4,5,6},{7,8,9}};
+	
+	int grad = tab[1][1] $ gx;
+	
+	
+	stencil s{2,1}= {1,1,1,1,1};
+	
+	int tab2 [5] = {42,21,7,314,127};
+	
+	int somme = tab2[2] $ s;
+	
+	printi (somme);
+	
 	
 	return 0;
 }

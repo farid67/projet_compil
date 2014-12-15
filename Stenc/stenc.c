@@ -191,6 +191,21 @@ void traitementQList( struct quad_list* q_list)
 						
 				}
 				
+				else if (strcmp(tmp->op,"free") == 0)
+				{
+					printf("move ");
+					switch (tmp->arg1->value)
+						{
+							case 16:
+								printf("$s0 ");
+								break;
+							case 17:
+								printf("$s1 ");
+								break;
+						}
+					printf("$0 \n");
+				}
+				
 				
 				else if (strcmp(tmp->op,"lw") ==0) // l'argument est forcément une variable 
 				{
@@ -256,6 +271,18 @@ void traitementQList( struct quad_list* q_list)
 				}
 				
 				// opération arithmétique
+				
+				else if (strcmp(tmp->op,"neg") == 0)
+				{
+					printf("\tneg $t0 $t3");
+					printf("\n");
+					if (tmp->res->isConstant== 3)
+					{
+						printf("\tmove $t6 $t0\n");
+					}
+					
+				}
+				
 				else if (strcmp(tmp->op,"add") ==0  || strcmp(tmp->op,"mul") ==0  || (strcmp(tmp->op,"div") ==0 ) || (strcmp(tmp->op,"sub") ==0 ))
 				{
 // 					printf("%s\n",tmp->op);
