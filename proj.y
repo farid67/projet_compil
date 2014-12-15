@@ -156,7 +156,86 @@ liste_inst :
 		
 
 instruction:	
-		IF '(' expr_bool ')' '{' liste_inst '}'
+		FOR '(' declaration ';' expr_bool ';' expr_part ')' '{' liste_inst '}'
+			{
+				$$.code = NULL;
+				// ajout $3.code à $$.code
+				
+				concat (&$$.code,$3.code);
+				
+				// création label pour l'expr part
+				
+				struct symbol* new_label2 = new_tmp(&tds);
+				new_label2->isVar = 5; // création d'un symbole qui sera une étiquette dans le code Mips
+				
+				struct quad* q_label3 = new_quad(next_quad($5.code),"label",NULL,NULL,new_label2);
+				label_quad++;
+				
+				struct quad_list* tmp_list2 = new_quad_list (q_label3);
+				concat(&tmp_list2,$7.code);
+				
+				$7.code = tmp_list2;
+				
+				
+				// quad goto -> expr bool
+				
+				struct symbol*tmp3 = new_tmp(&tds);
+				struct quad* q_loop2 = new_quad(next_quad($7.code),"goto",NULL,NULL,tmp3);
+				label_quad ++;
+				
+				quad_add(&$7.code,q_loop2);
+				
+				// création label pour le début de la liste d'instructions
+				
+				struct symbol* new_label = new_tmp(&tds);
+				new_label->isVar = 5; // création d'un symbole qui sera une étiquette dans le code Mips
+				
+				struct quad* q_label = new_quad(next_quad($7.code),"label",NULL,NULL,new_label);
+				label_quad++;
+				
+				struct quad_list* tmp_list = new_quad_list (q_label);
+				concat(&tmp_list,$10.code);
+				
+				$10.code = tmp_list;
+				
+				
+				
+				
+				
+				
+				// génération d'un quad pour qu'à la fin de la liste d'instructions on boucle sur la condition pour la tester à nouveau
+				
+				struct symbol*tmp2 = new_tmp(&tds);
+				struct quad* q_loop = new_quad(next_quad($10.code),"goto",NULL,NULL,tmp2);
+				label_quad ++;
+				
+				quad_add(&$10.code,q_loop);
+				
+				
+				
+				complete (&$5.true_list,next_quad($7.code));
+				complete (&$5.false_list,next_quad($10.code));
+				
+				concat(&$$.code,$5.code);
+				
+				concat(&$$.code,$7.code);
+				
+				concat(&$$.code,$10.code);
+				
+				tmp2->value = $7.code->node->label;
+				tmp3->value = $5.code->node->label;
+				
+				// ajout d'un quad qui se situera après la liste d'instructions
+				
+				struct symbol* new_label3 = new_tmp(&tds);
+				new_label3->isVar = 5; 
+				struct quad* q_label2 = new_quad(next_quad($10.code),"label",NULL,NULL,new_label3);
+				label_quad++;
+				
+				quad_add(&$$.code,q_label2);
+				
+			}
+		|IF '(' expr_bool ')' '{' liste_inst '}'
 			{
 				$$.code = NULL;
 				
@@ -1304,7 +1383,7 @@ expr : 		ID
 				
 				// ATTENTION la taille des dimensions sont stockés dans le sens inverse 
 				
-				for (i = 0;i< $2.nb_dimension-1; i++)
+				for (i = 0;i< $4.nb_dimension-1; i++)
 				{
 					if (tab->dimension_size[i] < $4.tab[i])
 					{
@@ -1342,11 +1421,11 @@ expr : 		ID
 				intermed ->isConstant = 3;
 				
 				
-				for (i = index - distance -   $4.tab[$2.nb_dimension -1 ] * (dimension -1); 
-				i <= index + distance + $4.tab[$2.nb_dimension -1 ] * (dimension -1); i++)
+				for (i = index - distance -   $4.tab[$4.nb_dimension -1 ] * (dimension -1); 
+				i <= index + distance + $4.tab[$4.nb_dimension -1 ] * (dimension -1); i++)
 				{
 					s = alloc ();
-					if ($2.indexDefined == 1)
+					if ($4.indexDefined == 1)
 						s -> isVar = 2;// c'est un élément de tableau
 					else
 						s -> isVar = 3;// on ne connait pas l'index à l'avance -> par exemple tab[i] demande d'abord une évaluation de i 
@@ -1451,14 +1530,154 @@ expr_part :
 			{
 				$$.code = NULL;
 				
+				concat (&$$.code,$2.code);
+				
+				
+				struct symbol* res = new_tmp(&tds);
+				res->isConstant=0;
+				
+				
+				
+				struct quad* q_assign = new_quad(label_quad,"=",$2.result,NULL,res);
+				label_quad++;
+				
+				quad_add(&$$.code,q_assign);
+				
+				
+				struct symbol* s_1 = alloc();
+				s_1->value = 1;
+				
+				struct symbol* n_t5 = alloc();
+				n_t5 -> value = 13;
+				
+				struct quad* quad_a1 =  new_quad (label_quad,"li",s_1,NULL,n_t5);
+				label_quad++;
+				
+				quad_add(&$$.code,quad_a1);
+				
+				struct symbol* n_t3 =  alloc();
+				n_t3->value = 11;
+				
+				struct quad* quad_a3 = NULL;
+				
+					
+				if ($2.result->isVar == 0)
+					quad_a3 =  new_quad(label_quad,"li",$2.result,NULL,n_t3);
+				else
+					quad_a3 =  new_quad(label_quad,"lw",$2.result,NULL,n_t3);
+				label_quad ++ ;
+				
+				quad_add (&$$.code,quad_a3);
+				
+				
+				struct quad* q_incr = new_quad(label_quad,"add", n_t5, n_t3, $2.result);
+				label_quad++;
+				
+				quad_add(&$$.code,q_incr);
+				
+				
+				$$.result = res;
 			}
 		| expr DECR 
 			{
 				$$.code = NULL;
+				
+				concat (&$$.code,$1.code);
+				
+				struct symbol* s_1 = alloc();
+				s_1->value = 1;
+				
+				struct symbol* n_t5 = alloc();
+				n_t5 -> value = 13;
+				
+				struct quad* quad_a1 =  new_quad (label_quad,"li",s_1,NULL,n_t5);
+				label_quad++;
+				
+				quad_add(&$$.code,quad_a1);
+				
+				struct symbol* n_t3 =  alloc();
+				n_t3->value = 11;
+				
+				struct quad* quad_a3 = NULL;
+				
+					
+				if ($1.result->isVar == 0)
+					quad_a3 =  new_quad(label_quad,"li",$1.result,NULL,n_t3);
+				else
+					quad_a3 =  new_quad(label_quad,"lw",$1.result,NULL,n_t3);
+				label_quad ++ ;
+				
+				quad_add (&$$.code,quad_a3);
+				
+				
+				struct quad* q_incr = new_quad(label_quad,"sub", n_t5, n_t3, $1.result);
+				label_quad++;
+				
+				quad_add(&$$.code,q_incr);
+				
+				struct symbol* res = new_tmp(&tds);
+				res->isConstant=0;
+				
+				
+				
+				struct quad* q_assign = new_quad(label_quad,"=",$1.result,NULL,res);
+				label_quad++;
+				
+				quad_add(&$$.code,q_assign);
+				
+				$$.result = res;
 			}
 		| DECR expr 
 			{
 				$$.code = NULL;
+				
+				concat (&$$.code,$2.code);
+				
+				
+				struct symbol* res = new_tmp(&tds);
+				res->isConstant=0;
+				
+				
+				
+				struct quad* q_assign = new_quad(label_quad,"=",$2.result,NULL,res);
+				label_quad++;
+				
+				quad_add(&$$.code,q_assign);
+				
+				
+				struct symbol* s_1 = alloc();
+				s_1->value = 1;
+				
+				struct symbol* n_t5 = alloc();
+				n_t5 -> value = 13;
+				
+				struct quad* quad_a1 =  new_quad (label_quad,"li",s_1,NULL,n_t5);
+				label_quad++;
+				
+				quad_add(&$$.code,quad_a1);
+				
+				struct symbol* n_t3 =  alloc();
+				n_t3->value = 11;
+				
+				struct quad* quad_a3 = NULL;
+				
+					
+				if ($2.result->isVar == 0)
+					quad_a3 =  new_quad(label_quad,"li",$2.result,NULL,n_t3);
+				else
+					quad_a3 =  new_quad(label_quad,"lw",$2.result,NULL,n_t3);
+				label_quad ++ ;
+				
+				quad_add (&$$.code,quad_a3);
+				
+				
+				struct quad* q_incr = new_quad(label_quad,"sub", n_t5, n_t3, $2.result);
+				label_quad++;
+				
+				quad_add(&$$.code,q_incr);
+				
+				
+				$$.result = res;
 			}
 		;
 		

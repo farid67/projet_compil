@@ -27,3 +27,7 @@
 
 -> test14 -> support stenC
 
+-> test15 -> ajout boucle for 
+
+
+
