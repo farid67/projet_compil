@@ -12,11 +12,18 @@ int main()
 	
 	stencil s{2,1}= {1,1,1,1,1};
 	
-	int tab2 [5] = {42,21,7,314,127};
+	int tab2 [5] = {42,21,7,314,127,169};
 	
 	int somme = tab2[2] $ s;
 	
 	printi (somme);
+	
+	
+	int tableau[2];
+	
+	int k =tableau[0];
+	
+	printi (k);
 	
 	
 	return 0;

@@ -660,6 +660,11 @@ declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 				$$.code = NULL;
 				struct symbol* tab = new_tab($1,$2.tab,$2.nb_dimension);
 				tab_add(&tds,tab);
+				
+				int *tableau = malloc ($2.nb_dimension * sizeof(int));
+				
+				tab_complete(&tab,tableau);
+				
 				concat(&$$.code,$2.code);
 			}
 		|ID TAB '=' '{' liste '}' // cas tableaux unidim
