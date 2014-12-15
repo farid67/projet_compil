@@ -16,6 +16,7 @@ ascii		[\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/0-9\:\;\<\=\>\?\@\[\\\]\^_\`\{\|\}\~]*
 string			\"(\\.|[^\\"])*\"
 
 %x COMMENT
+%x COMMENTL
 
 %%
 
@@ -70,6 +71,16 @@ return			{return RETURN;}
 				}
 <COMMENT>\n    { compteur_ligne++; }   // on incrémente les lignes dans le commentaire (le cas échéant)
 <COMMENT>.     {}   // on ignore tout quand on est dans l'état COMMENT
+
+
+
+\/\/			{ 	// début de commentaire ligne, entre dans état COMMENTL
+					BEGIN(COMMENTL);
+				}
+<COMMENTL>\n	{	// fin de ligne, donc fin du commentaire
+					BEGIN(INITIAL);
+				}
+<COMMENTL>.		{} 	// pour faire simple on ignore tout ici
 
 
 {string}		{
