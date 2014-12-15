@@ -3,7 +3,7 @@ const int width = 128;
 
 int main()
 {
-	int i,j;
+	int i,j,tmp;
 	int gx,gy;
 	int image[height][width]; //Image originale en niveaux de gris 
 	int sobel[height][width]; //Image transformee
@@ -28,6 +28,8 @@ int main()
 				gy = -gy;
 			}
 			sobel[i][j] = (gx + gy)/2;
+			tmp = sobel[i][j];
+			printi(tmp);
 		}
 	}
 	

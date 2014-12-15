@@ -51,7 +51,7 @@
 %token <value> ZERO SIZE
 %type <value> NUMERO
 %token <identificateur> ID
-%type <code_gen> declaration instruction en_tete prg stenc liste_inst
+%type <code_gen> declaration declaration_mult instruction en_tete prg stenc liste_inst
 %type <code_gen> expr expr_part expr_bool 
 %token <code_gen> TRUE FALSE
 %type <tab> TAB init liste
@@ -419,23 +419,58 @@ instruction:
 				$$.code = NULL;
 				concat (&$$.code, $1.code);
 			}
-		|INT declaration ';'
+		|INT declaration_mult ';'
 			{
 				$$.code = NULL;
 				concat(&$$.code,$2.code);
 				
 				// à chaque fois qu'on à remonté une liste de quad, on l'ajoute à la liste de quad "globale", et dans le main, on gére cette liste de quad?
 			}
-		|INT declaration ',' declaration ';'
-			{
-				$$.code=NULL;
-				concat (&$$.code,$2.code);
-				concat (&$$.code,$4.code);
-			}
 /*	Pour le moment problème avec les chaines de caractères (gestion des " étrange, provoquent des erreurs semblerait-il) */
 		| PRINTF '(' CHAINE ')' ';'
 			{
 				$$.code=NULL;
+				struct symbol * chaine = new_tmp (&tds);
+				
+				chaine -> isVar = 4;
+				
+				int longueur = strlen($3);
+				int i;
+				chaine->dimension_size = malloc (longueur * sizeof(int));
+				
+				for (i = 0; i < longueur; i++)
+				{
+					chaine->dimension_size[i] = $3[i];
+				}
+				
+				chaine ->value = longueur;
+				
+				struct symbol* tmp = new_tmp(&tds);
+				tmp->value = 4;  // Le registre numéro 4 correspond à $a0
+				
+				struct quad* q_li_a0 = new_quad(label_quad,"la",chaine,NULL,tmp);
+				label_quad ++;
+				
+				// on demande l'appel système numéro 1 -> on le stocke dans $v0
+				struct symbol* tmp1 = new_tmp(&tds);
+				tmp1 -> value = 4;
+				
+				struct symbol* tmpv0 = new_tmp(&tds);
+				tmpv0->value = 2; // 2-> $v0
+				
+				struct quad* q_li_v0 = new_quad(label_quad,"li",tmp1,NULL,tmpv0);
+				label_quad++;
+				
+				
+				
+				
+				struct quad* q_string = new_quad (label_quad,"syscall",NULL,NULL,NULL);
+				label_quad++;
+				
+				quad_add (&$$.code,q_li_a0);
+				quad_add (&$$.code,q_li_v0);
+				quad_add (&$$.code,q_string);
+					
 			}
 
 		| PRINTI '(' expr ')' ';'
@@ -444,9 +479,7 @@ instruction:
 				
 				/********************************************************
 				 *
-				 * 	Pour afficher une valeur avec mips, on stocke la 
-				 * 	valeur que l'on veut afficher dans $a0 et on 
-				 * 	demande l'appel système numéro 1
+				 * 	Pour afficher 
 				 * 
 				*********************************************************/
 				
@@ -480,6 +513,7 @@ instruction:
 				tmpv0->value = 2; // 2-> $v0
 				
 				struct quad* q_li_v0 = new_quad(label_quad,"li",tmp1,NULL,tmpv0);
+				label_quad++;
 				
 				struct quad* sys = new_quad(label_quad,"syscall",NULL,NULL,NULL);
 				label_quad++;
@@ -537,6 +571,18 @@ instruction:
 			}
 		;
 
+declaration_mult: declaration_mult ',' declaration
+			{
+				$$.code = NULL;
+				concat(&$$.code,$1.code);
+				concat(&$$.code,$3.code);
+			}
+		| declaration
+			{
+				$$.code =  NULL;
+				$$.code = $1.code;
+			}
+		;
 
 declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 			{
@@ -549,7 +595,15 @@ declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 				{
 					s = symbol_add(&tds,$1);	
 				}
+				if (s!=NULL)
+				{
+					fprintf(stderr,"WARNING var redefinie\n");
+				}
 				s->isConstant = 0;
+				if (s ->isVar == 1)
+				{
+					s->value = $3.result->value;
+				}
 				
 				// affecter une valeur à une variable entière <=> li en mips
 				struct quad* q_assign = new_quad(label_quad,"=",$3.result,NULL,s);
@@ -630,6 +684,7 @@ declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 				{
 					if (id->dimension_size[i] < $2.tab[i])
 					{
+/* 						printf("%d\n",id->dimension_size[i] ); */
 						yyerror("overflow in tab\n");
 						return -1;
 					}
@@ -661,7 +716,19 @@ declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 				struct symbol* tab = new_tab($1,$2.tab,$2.nb_dimension);
 				tab_add(&tds,tab);
 				
-				int *tableau = malloc ($2.nb_dimension * sizeof(int));
+				
+				
+				int i,nb_value= 0;
+				for (i = 0;i< $2.nb_dimension; i++)
+				{
+					nb_value += ($2.tab[i] * $2.nb_dimension) ;
+				}
+				
+				
+				int * tableau = calloc (nb_value,sizeof(int));
+				
+				
+				tab->value = nb_value;
 				
 				tab_complete(&tab,tableau);
 				
@@ -678,6 +745,8 @@ declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 				tab_add(&tds,tab);
 				
 				// récupération des données contenues dans la liste entre les accolades 
+				
+				
 				tab_complete (&tab,$5.tab);
 				concat (&$$.code,$2.code);
 			}
@@ -717,14 +786,7 @@ declaration :	ID '=' expr // i = 0; i = j; i = tab[0]
 			}
 		
 		;
-/*
-chaineAscii :   CHAINE 
-			{
-				printf("%s",$1);
-				$$ = strdup ($1);
-			}
-		;
-*/
+
 		
 /*
 TAB_DECL:	// on différence 2 cas pour les tableaux car on ne peut pas définir un tableau avec 0 élements par contre on peut vouloir accéder à tab[0]
@@ -754,7 +816,7 @@ TAB:		'[' expr ']'
 				int* d = malloc (sizeof (int));
 				// si l'expression est une variable (exemple tab[i]), on commence par stocker i dans $t1
 				
-				if ($2.result->isVar==0)
+				if ($2.result->isVar==0 || $2.result->isConstant== 1 || $2.result->isVar == 1)
 				{
 					d[0] = $2.result->value;
 					$$.indexDefined = 1;
@@ -781,7 +843,7 @@ TAB:		'[' expr ']'
 				// realloc + une case et écriture
 				int*d  =  realloc($1.tab,$1.nb_dimension +1);
 				
-				if ($3.result->isVar==0)
+				if ($3.result->isVar==0 || $3.result->isConstant== 1 || $3.result->isVar == 1)
 				{
 					d[$1.nb_dimension] = $3.result->value;
 					$$.indexDefined = $1.indexDefined;
@@ -891,8 +953,8 @@ expr : 		ID
 				if (s == NULL)
 				{
 					s = symbol_add(&tds,$1);	
+					s->isConstant = 0;
 				}
-				s->isConstant = 0;
 				$$.result = s;
 			}
 		|NUMERO
@@ -1137,7 +1199,7 @@ expr : 		ID
 			}
 		| expr '-' expr
 			{
-				printf("ici\n");
+/* 				printf("ici\n"); */
 				$$.code = NULL;
 				// création d'un symbole temporaire qui contiendra le résulat de l'addition
 				struct symbol* tmp = new_tmp(&tds);
@@ -1413,7 +1475,7 @@ expr : 		ID
 				
 				for (i = 0;i< $4.nb_dimension-1; i++)
 				{
-					if (tab->dimension_size[i] < $4.tab[i])
+					if (tab->dimension_size[tab->value - i] < $4.tab[i])
 					{
 						yyerror("overflow in tab");
 						return -1;
@@ -1447,6 +1509,20 @@ expr : 		ID
 				struct symbol* intermed  = new_tmp(&tds);
 				intermed -> value = 17;
 				intermed ->isConstant = 3;
+				
+				// free registers $s0 et $s1
+				
+				
+				struct quad *setZ = NULL;
+				setZ = new_quad (label_quad,"free",res,NULL,NULL);
+				label_quad++;
+				
+				quad_add (&$$.code,setZ);
+				
+				setZ = new_quad (label_quad,"free",intermed,NULL,NULL);
+				label_quad++;
+				quad_add (&$$.code,setZ);
+				
 				
 				
 				for (i = index - distance -   $4.tab[$4.nb_dimension -1 ] * (dimension -1); 
@@ -1615,24 +1691,25 @@ expr_part :
 				struct symbol* s_1 = alloc();
 				s_1->value = 1;
 				
-				struct symbol* n_t5 = alloc();
-				n_t5 -> value = 13;
-				
-				struct quad* quad_a1 =  new_quad (label_quad,"li",s_1,NULL,n_t5);
-				label_quad++;
-				
-				quad_add(&$$.code,quad_a1);
 				
 				struct symbol* n_t3 =  alloc();
 				n_t3->value = 11;
+				
+				struct quad* quad_a1 =  new_quad (label_quad,"li",s_1,NULL,n_t3);
+				label_quad++;
+				
+				quad_add(&$$.code,quad_a1);
+				struct symbol* n_t5 = alloc();
+				n_t5 -> value = 13;
+				
 				
 				struct quad* quad_a3 = NULL;
 				
 					
 				if ($1.result->isVar == 0)
-					quad_a3 =  new_quad(label_quad,"li",$1.result,NULL,n_t3);
+					quad_a3 =  new_quad(label_quad,"li",$1.result,NULL,n_t5);
 				else
-					quad_a3 =  new_quad(label_quad,"lw",$1.result,NULL,n_t3);
+					quad_a3 =  new_quad(label_quad,"lw",$1.result,NULL,n_t5);
 				label_quad ++ ;
 				
 				quad_add (&$$.code,quad_a3);
@@ -1676,24 +1753,25 @@ expr_part :
 				struct symbol* s_1 = alloc();
 				s_1->value = 1;
 				
-				struct symbol* n_t5 = alloc();
-				n_t5 -> value = 13;
 				
-				struct quad* quad_a1 =  new_quad (label_quad,"li",s_1,NULL,n_t5);
+				struct symbol* n_t3 =  alloc();
+				n_t3->value = 11;
+				
+				struct quad* quad_a1 =  new_quad (label_quad,"li",s_1,NULL,n_t3);
 				label_quad++;
 				
 				quad_add(&$$.code,quad_a1);
 				
-				struct symbol* n_t3 =  alloc();
-				n_t3->value = 11;
+				struct symbol* n_t5 = alloc();
+				n_t5 -> value = 13;
 				
 				struct quad* quad_a3 = NULL;
 				
 					
 				if ($2.result->isVar == 0)
-					quad_a3 =  new_quad(label_quad,"li",$2.result,NULL,n_t3);
+					quad_a3 =  new_quad(label_quad,"li",$2.result,NULL,n_t5);
 				else
-					quad_a3 =  new_quad(label_quad,"lw",$2.result,NULL,n_t3);
+					quad_a3 =  new_quad(label_quad,"lw",$2.result,NULL,n_t5);
 				label_quad ++ ;
 				
 				quad_add (&$$.code,quad_a3);
@@ -1947,6 +2025,7 @@ expr_bool:
 				
 				// créer un nouveau symbole qui contiendra le résultat de la condition
 				struct symbol* tmp = new_tmp(&tds);
+				tmp->isConstant = 3;
 				// le symbole tmp sera le résultat du quad créer par cette condition
 					//on ne connait pas encore le résultat de ce test
 				
@@ -1959,10 +2038,13 @@ expr_bool:
 				struct quad* quad_a1 = NULL;
 				
 					
-				if ($1.result->isVar == 0)
+				if ($1.result->isVar == 0 && $1.result->isConstant !=3)
 					quad_a1 =  new_quad(label_quad,"li",$1.result,NULL,s_t6);
-				else
+				else if ($1.result->isConstant!=3)
 					quad_a1 =  new_quad(label_quad,"lw",$1.result,NULL,s_t6);
+				else
+					quad_a1 = new_quad(label_quad,"movet6",$1.result,NULL,s_t6);
+				
 				label_quad ++ ;
 				
 				
@@ -1974,10 +2056,12 @@ expr_bool:
 				struct quad* quad_a3 = NULL;
 				
 					
-				if ($3.result->isVar == 0)
+				if ($3.result->isVar == 0 && $3.result->isConstant !=3)
 					quad_a3 =  new_quad(label_quad,"li",$3.result,NULL,s_t7);
-				else
+				else if ($3.result->isConstant!=3)
 					quad_a3 =  new_quad(label_quad,"lw",$3.result,NULL,s_t7);
+				else
+					quad_a3 = new_quad(label_quad,"movet7",$3.result,NULL,s_t7);
 				label_quad ++ ;
 				
 				
@@ -1990,11 +2074,25 @@ expr_bool:
 				struct quad* q_goto = new_quad(label_quad,"goto",NULL,NULL,tmp2);
 				label_quad ++;
 				
-				quad_add(&$$.code,q_label);
-				quad_add(&$$.code,quad_a1);
-				quad_add(&$$.code,quad_a3);
-				quad_add(&$$.code,q_eval);
-				quad_add(&$$.code,q_goto);
+				struct quad_list* l = NULL;
+				l = new_quad_list(q_label);
+				
+				concat(&$$.code,l);
+				concat (&$$.code,$1.code);
+				concat (&$$.code,$3.code);
+				
+				
+				l=new_quad_list(quad_a3);
+				concat(&$$.code,l);
+				
+				l=new_quad_list(quad_a1);
+				concat(&$$.code,l);
+				
+				
+				
+				
+				concat(&$$.code,new_quad_list(q_eval));
+				concat(&$$.code,new_quad_list(q_goto));
 				$$.true_list = new_quad_list(q_eval);
 				$$.false_list = new_quad_list(q_goto);
 			}
@@ -2012,6 +2110,7 @@ expr_bool:
 				
 				// créer un nouveau symbole qui contiendra le résultat de la condition
 				struct symbol* tmp = new_tmp(&tds);
+				tmp->isConstant = 3;
 				// le symbole tmp sera le résultat du quad créer par cette condition
 					//on ne connait pas encore le résultat de ce test
 				
@@ -2024,10 +2123,13 @@ expr_bool:
 				struct quad* quad_a1 = NULL;
 				
 					
-				if ($1.result->isVar == 0)
+				if ($1.result->isVar == 0 && $1.result->isConstant !=3)
 					quad_a1 =  new_quad(label_quad,"li",$1.result,NULL,s_t6);
-				else
+				else if ($1.result->isConstant!=3)
 					quad_a1 =  new_quad(label_quad,"lw",$1.result,NULL,s_t6);
+				else
+					quad_a1 = new_quad(label_quad,"movet6",$1.result,NULL,s_t6);
+				
 				label_quad ++ ;
 				
 				
@@ -2039,10 +2141,12 @@ expr_bool:
 				struct quad* quad_a3 = NULL;
 				
 					
-				if ($3.result->isVar == 0)
+				if ($3.result->isVar == 0 && $3.result->isConstant !=3)
 					quad_a3 =  new_quad(label_quad,"li",$3.result,NULL,s_t7);
-				else
+				else if ($3.result->isConstant!=3)
 					quad_a3 =  new_quad(label_quad,"lw",$3.result,NULL,s_t7);
+				else
+					quad_a3 = new_quad(label_quad,"movet7",$3.result,NULL,s_t7);
 				label_quad ++ ;
 				
 				
@@ -2055,15 +2159,29 @@ expr_bool:
 				struct quad* q_goto = new_quad(label_quad,"goto",NULL,NULL,tmp2);
 				label_quad ++;
 				
-				quad_add(&$$.code,q_label);
-				quad_add(&$$.code,quad_a1);
-				quad_add(&$$.code,quad_a3);
-				quad_add(&$$.code,q_eval);
-				quad_add(&$$.code,q_goto);
+				struct quad_list* l = NULL;
+				l = new_quad_list(q_label);
+				
+				concat(&$$.code,l);
+				concat (&$$.code,$1.code);
+				concat (&$$.code,$3.code);
+				
+				
+				l=new_quad_list(quad_a3);
+				concat(&$$.code,l);
+				
+				l=new_quad_list(quad_a1);
+				concat(&$$.code,l);
+				
+				
+				
+				
+				concat(&$$.code,new_quad_list(q_eval));
+				concat(&$$.code,new_quad_list(q_goto));
 				$$.true_list = new_quad_list(q_eval);
 				$$.false_list = new_quad_list(q_goto);
 			}
-		| expr '>''=' expr
+		| expr GE expr
 			{
 				$$.code = NULL;
 				
@@ -2077,6 +2195,7 @@ expr_bool:
 				
 				// créer un nouveau symbole qui contiendra le résultat de la condition
 				struct symbol* tmp = new_tmp(&tds);
+				tmp->isConstant = 3;
 				// le symbole tmp sera le résultat du quad créer par cette condition
 					//on ne connait pas encore le résultat de ce test
 				
@@ -2089,10 +2208,13 @@ expr_bool:
 				struct quad* quad_a1 = NULL;
 				
 					
-				if ($1.result->isVar == 0)
+				if ($1.result->isVar == 0 && $1.result->isConstant !=3)
 					quad_a1 =  new_quad(label_quad,"li",$1.result,NULL,s_t6);
-				else
+				else if ($1.result->isConstant!=3)
 					quad_a1 =  new_quad(label_quad,"lw",$1.result,NULL,s_t6);
+				else
+					quad_a1 = new_quad(label_quad,"movet6",$1.result,NULL,s_t6);
+				
 				label_quad ++ ;
 				
 				
@@ -2104,14 +2226,16 @@ expr_bool:
 				struct quad* quad_a3 = NULL;
 				
 					
-				if ($4.result->isVar == 0)
-					quad_a3 =  new_quad(label_quad,"li",$4.result,NULL,s_t7);
+				if ($3.result->isVar == 0 && $3.result->isConstant !=3)
+					quad_a3 =  new_quad(label_quad,"li",$3.result,NULL,s_t7);
+				else if ($3.result->isConstant!=3)
+					quad_a3 =  new_quad(label_quad,"lw",$3.result,NULL,s_t7);
 				else
-					quad_a3 =  new_quad(label_quad,"lw",$4.result,NULL,s_t7);
+					quad_a3 = new_quad(label_quad,"movet7",$3.result,NULL,s_t7);
 				label_quad ++ ;
 				
 				
-				struct quad* q_eval = new_quad(label_quad,">=",$1.result,$4.result,tmp);
+				struct quad* q_eval = new_quad(label_quad,">=",$1.result,$3.result,tmp);
 				label_quad ++;// incrémentation du label
 
 				// création d'un label de goto 
@@ -2120,15 +2244,29 @@ expr_bool:
 				struct quad* q_goto = new_quad(label_quad,"goto",NULL,NULL,tmp2);
 				label_quad ++;
 				
-				quad_add(&$$.code,q_label);
-				quad_add(&$$.code,quad_a1);
-				quad_add(&$$.code,quad_a3);
-				quad_add(&$$.code,q_eval);
-				quad_add(&$$.code,q_goto);
+				struct quad_list* l = NULL;
+				l = new_quad_list(q_label);
+				
+				concat(&$$.code,l);
+				concat (&$$.code,$1.code);
+				concat (&$$.code,$3.code);
+				
+				
+				l=new_quad_list(quad_a3);
+				concat(&$$.code,l);
+				
+				l=new_quad_list(quad_a1);
+				concat(&$$.code,l);
+				
+				
+				
+				
+				concat(&$$.code,new_quad_list(q_eval));
+				concat(&$$.code,new_quad_list(q_goto));
 				$$.true_list = new_quad_list(q_eval);
 				$$.false_list = new_quad_list(q_goto);
 			}
-		| expr '<''=' expr
+		| expr LE expr
 			{
 				$$.code = NULL;
 				
@@ -2142,6 +2280,7 @@ expr_bool:
 				
 				// créer un nouveau symbole qui contiendra le résultat de la condition
 				struct symbol* tmp = new_tmp(&tds);
+				tmp->isConstant = 3;
 				// le symbole tmp sera le résultat du quad créer par cette condition
 					//on ne connait pas encore le résultat de ce test
 				
@@ -2154,10 +2293,13 @@ expr_bool:
 				struct quad* quad_a1 = NULL;
 				
 					
-				if ($1.result->isVar == 0)
+				if ($1.result->isVar == 0 && $1.result->isConstant !=3)
 					quad_a1 =  new_quad(label_quad,"li",$1.result,NULL,s_t6);
-				else
+				else if ($1.result->isConstant!=3)
 					quad_a1 =  new_quad(label_quad,"lw",$1.result,NULL,s_t6);
+				else
+					quad_a1 = new_quad(label_quad,"movet6",$1.result,NULL,s_t6);
+				
 				label_quad ++ ;
 				
 				
@@ -2169,14 +2311,16 @@ expr_bool:
 				struct quad* quad_a3 = NULL;
 				
 					
-				if ($4.result->isVar == 0)
-					quad_a3 =  new_quad(label_quad,"li",$4.result,NULL,s_t7);
+				if ($3.result->isVar == 0 && $3.result->isConstant !=3)
+					quad_a3 =  new_quad(label_quad,"li",$3.result,NULL,s_t7);
+				else if ($3.result->isConstant!=3)
+					quad_a3 =  new_quad(label_quad,"lw",$3.result,NULL,s_t7);
 				else
-					quad_a3 =  new_quad(label_quad,"lw",$4.result,NULL,s_t7);
+					quad_a3 = new_quad(label_quad,"movet7",$3.result,NULL,s_t7);
 				label_quad ++ ;
 				
 				
-				struct quad* q_eval = new_quad(label_quad,"<=",$1.result,$4.result,tmp);
+				struct quad* q_eval = new_quad(label_quad,"<=",$1.result,$3.result,tmp);
 				label_quad ++;// incrémentation du label
 
 				// création d'un label de goto 
@@ -2185,11 +2329,25 @@ expr_bool:
 				struct quad* q_goto = new_quad(label_quad,"goto",NULL,NULL,tmp2);
 				label_quad ++;
 				
-				quad_add(&$$.code,q_label);
-				quad_add(&$$.code,quad_a1);
-				quad_add(&$$.code,quad_a3);
-				quad_add(&$$.code,q_eval);
-				quad_add(&$$.code,q_goto);
+				struct quad_list* l = NULL;
+				l = new_quad_list(q_label);
+				
+				concat(&$$.code,l);
+				concat (&$$.code,$1.code);
+				concat (&$$.code,$3.code);
+				
+				
+				l=new_quad_list(quad_a3);
+				concat(&$$.code,l);
+				
+				l=new_quad_list(quad_a1);
+				concat(&$$.code,l);
+				
+				
+				
+				
+				concat(&$$.code,new_quad_list(q_eval));
+				concat(&$$.code,new_quad_list(q_goto));
 				$$.true_list = new_quad_list(q_eval);
 				$$.false_list = new_quad_list(q_goto);
 			}

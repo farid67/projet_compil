@@ -45,6 +45,17 @@ void traitementTds( struct symbol* tds)
 				printf("\n");
 			}
 			
+			if (tmp->isVar == 4)
+			{
+				printf("%s:\t .asciiz \"",tmp->name);
+				int i;
+				for (i = 0 ; i< tmp->value; i++)
+				{
+					printf("%c",tmp->dimension_size[i]);
+				}
+				printf("\"\n");
+			}
+			
 			
 			
 			tmp = tmp->next;
@@ -133,6 +144,37 @@ void traitementQList( struct quad_list* q_list)
 					printf("%d\n",tmp->arg1->value);
 				}
 				
+				else if (strcmp(tmp->op,"la") == 0)
+				{
+					printf("\t la ");
+					
+					switch (tmp->res->value)
+					{
+						case 2:
+							printf("$v0 ");
+							break;
+						case 4:
+							printf("$a0 ");
+							break;
+						case 11 :
+							printf("$t3 ");
+							break;
+						case 13 :
+							printf("$t5 ");
+							break;
+						case 14 :
+							printf("$t6 ");
+							break;
+						case 15 :
+							printf("$t7 ");
+							break;
+					}
+					
+					
+					printf("%s\n",tmp->arg1->name);
+					
+				}
+				
 				else if (strcmp(tmp->op,"=") ==0)
 				{
 					// affectation d'une expression vers un ID
@@ -193,7 +235,7 @@ void traitementQList( struct quad_list* q_list)
 				
 				else if (strcmp(tmp->op,"free") == 0)
 				{
-					printf("move ");
+					printf("\tmove ");
 					switch (tmp->arg1->value)
 						{
 							case 16:
@@ -206,6 +248,15 @@ void traitementQList( struct quad_list* q_list)
 					printf("$0 \n");
 				}
 				
+				
+				else if (strcmp(tmp->op,"movet7") == 0)
+				{
+					printf("\t move $t7 $t6\n");
+				}
+				
+				else if (strcmp(tmp->op,"movet6") == 0)
+				{
+				}
 				
 				else if (strcmp(tmp->op,"lw") ==0) // l'argument est forcément une variable 
 				{

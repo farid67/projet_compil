@@ -4,10 +4,7 @@ const int width = 128;
 int main()
 {
 	
-	printf("Bonjour\n");
-	printf("Hello\n");
-	
-	
+	printf("Bonjour");
 	
 	return 0;
 }
